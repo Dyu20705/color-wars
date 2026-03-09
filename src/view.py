@@ -30,11 +30,8 @@ def drawBoard(SCREEN, BOARD, DOTS):
             y = start_y + j * NODE_SIZE
             rect = (x, y, NODE_SIZE, NODE_SIZE)
             drawNode(SCREEN, rect)
-            # Vẽ dot xanh nếu ô thuộc BLUE
-            if BOARD[j][i] == 1:
-                drawDot(SCREEN, x, y, 1, BLUE_COLOR)
-            # Vẽ dot theo số lượng và màu người chơi
-            if DOTS[j][i] > 0:
+            # Chỉ vẽ dot nếu ô còn thuộc về người chơi nào đó và có dot
+            if BOARD[j][i] != 0 and DOTS[j][i] > 0:
                 color = BLUE_COLOR if BOARD[j][i] == 1 else RED_COLOR
                 drawDot(SCREEN, x, y, DOTS[j][i], color)
 
