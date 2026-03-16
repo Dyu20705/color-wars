@@ -2,6 +2,7 @@ from collections import deque
 
 import pygame
 import view
+import ai
 
 GRID_SIZE = 5
 EMPTY = 0
@@ -25,12 +26,7 @@ def in_bounds(row, col):
 
 
 def get_cell_capacity(row, col):
-    capacity = 4
-    if row in (0, GRID_SIZE - 1):
-        capacity -= 1
-    if col in (0, GRID_SIZE - 1):
-        capacity -= 1
-    return capacity
+    return 4
 
 
 def get_scores():
@@ -98,17 +94,31 @@ def resolve_explosions(start_row, start_col):
 def try_place_dot(mouse_pos):
     global current_player, turn_count
 
-    # Nếu đã có người thắng, không cho đặt thêm quân nào nữa.
     if winner is not None:
         return
 
-    # Lấy ô lưới từ vị trí chuột, nếu click ngoài lưới thì bỏ qua.
     row, col = view.get_cell_from_mouse(mouse_pos, GRID_SIZE)
+
     if row is None or col is None:
         return
 
-    if BOARD[row][col] not in (EMPTY, current_player):
-        return
+    # kiểm tra player đã có ô nào chưa
+    has_cell = False
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            if BOARD[r][c] == current_player:
+                has_cell = True
+                break
+
+    # nếu chưa có ô -> lượt đầu -> chỉ được chọn ô trống
+    if not has_cell:
+        if BOARD[row][col] != EMPTY:
+            return
+
+    # nếu đã có ô -> chỉ được đánh vào ô của mình
+    else:
+        if BOARD[row][col] != current_player:
+            return
 
     BOARD[row][col] = current_player
     DOTS[row][col] += 1
@@ -121,20 +131,64 @@ def try_place_dot(mouse_pos):
     if winner is None:
         current_player = PLAYER_RED if current_player == PLAYER_BLUE else PLAYER_BLUE
 
+# def runGame():
+#     screen = view.drawScreen()
+#     clock = pygame.time.Clock()
 
+#     running = True
+#     while running:
+#         for event in pygame.event.get():
+#             if event.type == pygame.QUIT:
+#                 running = False
+#             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+#                 try_place_dot(event.pos)
+
+#         blue_score, red_score = get_scores()
+#         view.drawScene(screen, BOARD, DOTS, current_player, blue_score, red_score, winner)
+#         pygame.display.flip()
+#         clock.tick(FPS)
 def runGame():
+    global current_player, turn_count
+
     screen = view.drawScreen()
     clock = pygame.time.Clock()
 
     running = True
     while running:
+
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 running = False
+
+            # người chơi (Blue)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                try_place_dot(event.pos)
+                if current_player == PLAYER_BLUE:
+                    try_place_dot(event.pos)
+
+        # ===== AI TURN =====
+        if winner is None and current_player == PLAYER_RED:
+
+            move = ai.get_ai_move(BOARD, DOTS)
+
+            if move is not None:
+
+                r, c = move
+
+                BOARD[r][c] = PLAYER_RED
+                DOTS[r][c] += 1
+
+                resolve_explosions(r, c)
+
+                turn_count += 1
+                update_winner()
+
+                if winner is None:
+                    current_player = PLAYER_BLUE
 
         blue_score, red_score = get_scores()
+
         view.drawScene(screen, BOARD, DOTS, current_player, blue_score, red_score, winner)
+
         pygame.display.flip()
         clock.tick(FPS)
