@@ -4,6 +4,9 @@ EMPTY = 0
 PLAYER_BLUE = 1
 PLAYER_RED = 2
 
+EXPLOSION_THRESHOLD = 4
+NEWHOLD = 3
+OLDHOLD = 1
 
 def in_bounds(row, col, size):
     """Kiểm tra tọa độ (row, col) có nằm trong bàn cờ hay không."""
@@ -12,7 +15,7 @@ def in_bounds(row, col, size):
 
 def get_capacity(row, col, size):
     """Ngưỡng nổ của một ô (hiện tại cố định = 4)."""
-    return 4
+    return EXPLOSION_THRESHOLD
 
 
 def get_valid_moves(board, player):
@@ -39,6 +42,6 @@ def get_valid_moves(board, player):
 def get_move_dot_increment(board, row, col):
     """Ô trống khi chiếm mới +3 dot; ô đã sở hữu thì +1 dot."""
     if board[row][col] == EMPTY:
-        return 3
+        return NEWHOLD
 
-    return 1
+    return OLDHOLD

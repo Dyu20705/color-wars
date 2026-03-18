@@ -53,3 +53,4 @@ def get_ai_move(board, dots):
             best_move = (row, col)
 
     return best_move
+ 
