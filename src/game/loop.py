@@ -19,13 +19,14 @@ def run_game(game_mode=MODE_PVBOT):
         game_mode = MODE_PVBOT
 
     state = GameState()
+    difficulty = "easy"
 
     screen = view.drawScreen()
     clock = pygame.time.Clock()
 
     running = True
     while running:
-        # 1) Xử lý input (thoát, phím tắt, click chuột).
+        # Xử lý input (thoát, phím tắt, click chuột).
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -37,25 +38,21 @@ def run_game(game_mode=MODE_PVBOT):
                 elif event.key == pygame.K_m:
                     game_mode = MODE_PVP if game_mode == MODE_PVBOT else MODE_PVBOT
                     state = GameState()
+                elif event.key == pygame.K_1:
+                    difficulty = "easy"
+                elif event.key == pygame.K_2:
+                    difficulty = "medium"
+                elif event.key == pygame.K_3:
+                    difficulty = "hard"
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 # Ở pvbot chỉ cho người chơi Blue click; pvp thì cả hai người.
                 if game_mode == MODE_PVP or state.current_player == PLAYER_BLUE:
                     row, col = view.get_cell_from_mouse(event.pos, state.grid_size)
                     apply_move(state, row, col)
-            """ if game_mode == MODE_PVBOT:
-                    move = get_ai_move(board, dots, difficulty)
-                    apply_move(move) #move = (state, row, col)
-                if key == pygame.K_1:
-                    difficulty = "easy"
-                elif key == pygame.K_2:
-                    difficulty = "medium"
-                elif key == pygame.K_3:
-                    difficulty = "hard"
-            """
 
-        # 2) Lượt AI chỉ chạy trong pvbot, khi chưa có winner và tới lượt Red.
+        # Lượt AI chỉ chạy trong pvbot, khi chưa có winner và tới lượt Red.
         if game_mode == MODE_PVBOT and state.winner is None and state.current_player == PLAYER_RED:
-            move = get_ai_move(state.board, state.dots)
+            move = get_ai_move(state.board, state.dots, difficulty)
 
             if move is None:
                 # Không có nước đi hợp lệ: xử lý kết thúc ván hoặc nhường lượt.
@@ -69,7 +66,7 @@ def run_game(game_mode=MODE_PVBOT):
             else:
                 apply_move(state, move[0], move[1], player=PLAYER_RED)
 
-        # 3) Render frame hiện tại và khóa FPS ổn định.
+        # Render frame hiện tại và khóa FPS ổn định.
         blue_score, red_score = get_scores(state)
         view.drawScene(
             screen,
@@ -80,6 +77,7 @@ def run_game(game_mode=MODE_PVBOT):
             red_score,
             state.winner,
             game_mode,
+            difficulty,
         )
 
         pygame.display.flip()

@@ -50,11 +50,11 @@ def drawScreen():
     return screen
 
 
-def drawScene(screen, board, dots, current_player, blue_score, red_score, winner, game_mode=None):
+def drawScene(screen, board, dots, current_player, blue_score, red_score, winner, game_mode=None, difficulty=None):
     """Render một frame hoàn chỉnh"""
     screen.fill(BG_COLOR)
     drawBoard(screen, board, dots)
-    drawHud(screen, current_player, blue_score, red_score, winner, game_mode)
+    drawHud(screen, current_player, blue_score, red_score, winner, game_mode, difficulty)
 
 
 def drawBoard(screen, board, dots):
@@ -133,7 +133,7 @@ def _render_fitted_line(text, color, preferred_size, min_size, max_width):
     return font.render("", True, color)
 
 
-def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=None):
+def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=None, difficulty=None):
     """Vẽ HUD: điểm ở trên, trạng thái bên trái, phím tắt bên phải."""
     start_x, start_y = get_board_origin()
     board_center_x = start_x + BOARD_SIZE // 2
@@ -150,12 +150,13 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
     score_y = max(8, start_y - score_surface.get_height() - 10)
 
     mode_name = "PVP" if game_mode == "pvp" else "PVBOT"
+    difficulty_name = (difficulty or "easy").upper()
     if winner is None:
         turn_name = "Blue" if current_player == PLAYER_BLUE else "Red"
-        status_lines = [f"Mode: {mode_name}", f"Turn: {turn_name}"]
+        status_lines = [f"Mode: {mode_name}", f"Bot: {difficulty_name}", f"Turn: {turn_name}"]
     else:
         winner_name = "Blue" if winner == PLAYER_BLUE else "Red"
-        status_lines = [f"Mode: {mode_name}", f"Winner: {winner_name}"]
+        status_lines = [f"Mode: {mode_name}", f"Bot: {difficulty_name}", f"Winner: {winner_name}"]
 
     #mode game
     
@@ -165,7 +166,7 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
         line_surface = _render_fitted_line(line, HUD_TEXT_COLOR, preferred_size=22, min_size=14, max_width=left_panel_width)
         screen.blit(line_surface, (left_x, left_y + idx * 28))
 
-    control_lines = ["M: Switch mode", "R: Restart"]
+    control_lines = ["M: Switch mode", "R: Restart", "1/2/3: EZ/MED/HARD"]
     right_x = start_x + BOARD_SIZE + side_margin
     right_y = start_y + 12
     for idx, line in enumerate(control_lines):
