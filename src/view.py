@@ -2,7 +2,7 @@
 
 import pygame
 
-from src.engine.rules import EMPTY, PLAYER_BLUE
+from src.engine.rules import EMPTY, PLAYER_BLUE, PLAYER_RED
 
 DEFAULT_HEIGHT = 600
 DEFAULT_WIDTH = 800
@@ -222,6 +222,40 @@ def _render_fitted_line(text, color, preferred_size, min_size, max_width):
     return font.render("", True, color)
 
 
+def drawScoreBadge(screen, layout, blue_score, red_score, current_player):
+    """Draw a vertical rounded score badge, tinted by current turn."""
+    badge_h = max(120, int(layout["height"] * 0.22))
+    badge_w = max(56, int(badge_h * 0.45))
+    badge_x = max(6, layout["side_margin"] // 2)
+    badge_y = int(layout["board_y"] + layout["board_size"] * 0.5 - badge_h / 2)
+
+    badge_rect = pygame.Rect(badge_x, badge_y, badge_w, badge_h)
+    turn_color = BLUE_COLOR if current_player == PLAYER_BLUE else RED_COLOR
+
+    pygame.draw.ellipse(screen, (240, 240, 238), badge_rect)
+    pygame.draw.ellipse(screen, turn_color, badge_rect, 4)
+
+    score_font = pygame.font.SysFont("consolas", max(18, int(badge_w * 0.44)), bold=True)
+    blue_text = score_font.render(str(blue_score), True, BLUE_COLOR)
+    dot_text = score_font.render(" • ", True, (40, 40, 40))
+    red_text = score_font.render(str(red_score), True, RED_COLOR)
+
+    score_w = blue_text.get_width() + dot_text.get_width() + red_text.get_width()
+    score_h = max(blue_text.get_height(), dot_text.get_height(), red_text.get_height())
+    score_surface = pygame.Surface((score_w, score_h), pygame.SRCALPHA)
+    x = 0
+    score_surface.blit(blue_text, (x, 0))
+    x += blue_text.get_width()
+    score_surface.blit(dot_text, (x, 0))
+    x += dot_text.get_width()
+    score_surface.blit(red_text, (x, 0))
+
+    rotated = pygame.transform.rotate(score_surface, 90)
+    rx = badge_x + (badge_w - rotated.get_width()) // 2
+    ry = badge_y + (badge_h - rotated.get_height()) // 2
+    screen.blit(rotated, (rx, ry))
+
+
 def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=None, difficulty=None, layout=None):
     """Vẽ HUD: điểm ở trên, trạng thái bên trái, phím tắt bên phải."""
     start_x = layout["board_x"]
@@ -235,23 +269,12 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
     left_panel_width = max(120, start_x - side_margin * 2)
     right_panel_width = max(120, width - (start_x + board_size) - side_margin * 2)
 
-    score_text = f"Blue: {blue_score}   Red: {red_score}"
-    score_max_width = max(160, width - side_margin * 2)
-    score_surface = _render_fitted_line(
-        score_text,
-        HUD_TEXT_COLOR,
-        preferred_size=max(18, int(layout["height"] * 0.045)),
-        min_size=14,
-        max_width=score_max_width,
-    )
-    score_x = max(side_margin, board_center_x - score_surface.get_width() // 2)
-    score_y = max(8, side_margin)
+    drawScoreBadge(screen, layout, blue_score, red_score, current_player)
 
     mode_name = "PVP" if game_mode == "pvp" else "PVBOT"
     difficulty_name = (difficulty or "easy").upper()
     if winner is None:
-        turn_name = "Blue" if current_player == PLAYER_BLUE else "Red"
-        status_lines = [f"Mode: {mode_name}", f"Bot: {difficulty_name}", f"Turn: {turn_name}"]
+        status_lines = [f"Mode: {mode_name}", f"Bot: {difficulty_name}"]
     else:
         winner_name = "Blue" if winner == PLAYER_BLUE else "Red"
         status_lines = [f"Mode: {mode_name}", f"Bot: {difficulty_name}", f"Winner: {winner_name}"]
@@ -283,5 +306,4 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
         )
         screen.blit(line_surface, (right_x, right_y + idx * 28))
 
-    screen.blit(score_surface, (score_x, score_y))
 
