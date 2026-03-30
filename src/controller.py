@@ -40,7 +40,7 @@ def update_winner(state):
         state.winner = PLAYER_RED
 
 
-def apply_move(state, row, col, player=None):
+def apply_move(state, row, col, player=None, explosion_callback=None):
     """Áp dụng nước đi hợp lệ, xử lý nổ dây chuyền, rồi đổi lượt."""
     if state.winner is not None:
         return False
@@ -60,7 +60,7 @@ def apply_move(state, row, col, player=None):
     state.dots[row][col] += increment
 
     # Giải nổ có thể thay đổi nhiều ô do chain reaction.
-    resolve_explosions(state.board, state.dots, row, col)
+    resolve_explosions(state.board, state.dots, row, col, step_callback=explosion_callback)
 
     state.turn_count += 1
     update_winner(state)
