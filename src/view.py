@@ -8,7 +8,9 @@ DEFAULT_HEIGHT = 600
 DEFAULT_WIDTH = 800
 BORDER_WIDTH = 1
 
-BG_COLOR = (210, 137, 106)
+BG_NEUTRAL = (210, 137, 106)
+BG_BLUE_TURN = (169, 202, 210)
+BG_RED_TURN = (219, 151, 132)
 WHITE = (245, 236, 220)
 BLUE_COLOR = (34, 187, 226)
 RED_COLOR = (255, 92, 88)
@@ -84,7 +86,11 @@ def toggle_fullscreen(is_fullscreen, screen):
 def drawScene(screen, board, dots, current_player, blue_score, red_score, winner, game_mode=None, difficulty=None):
     """Render một frame hoàn chỉnh"""
     layout = compute_layout(screen, len(board))
-    screen.fill(BG_COLOR)
+    if winner is None:
+        bg_color = BG_BLUE_TURN if current_player == PLAYER_BLUE else BG_RED_TURN
+    else:
+        bg_color = BG_NEUTRAL
+    screen.fill(bg_color)
     drawBoard(screen, board, dots, layout)
     drawHud(screen, current_player, blue_score, red_score, winner, game_mode, difficulty, layout)
 
@@ -223,11 +229,11 @@ def _render_fitted_line(text, color, preferred_size, min_size, max_width):
 
 
 def drawScoreBadge(screen, layout, blue_score, red_score, current_player):
-    """Draw a vertical rounded score badge, tinted by current turn."""
-    badge_h = max(120, int(layout["height"] * 0.22))
-    badge_w = max(56, int(badge_h * 0.45))
-    badge_x = max(6, layout["side_margin"] // 2)
-    badge_y = int(layout["board_y"] + layout["board_size"] * 0.5 - badge_h / 2)
+    """Draw a top-center horizontal score pill, tinted by current turn."""
+    badge_w = max(180, int(layout["width"] * 0.26))
+    badge_h = max(44, int(layout["height"] * 0.08))
+    badge_x = (layout["width"] - badge_w) // 2
+    badge_y = max(8, layout["side_margin"] // 2)
 
     badge_rect = pygame.Rect(badge_x, badge_y, badge_w, badge_h)
     turn_color = BLUE_COLOR if current_player == PLAYER_BLUE else RED_COLOR
@@ -235,9 +241,9 @@ def drawScoreBadge(screen, layout, blue_score, red_score, current_player):
     pygame.draw.ellipse(screen, (240, 240, 238), badge_rect)
     pygame.draw.ellipse(screen, turn_color, badge_rect, 4)
 
-    score_font = pygame.font.SysFont("consolas", max(18, int(badge_w * 0.44)), bold=True)
+    score_font = pygame.font.SysFont("consolas", max(20, int(badge_h * 0.48)), bold=True)
     blue_text = score_font.render(str(blue_score), True, BLUE_COLOR)
-    dot_text = score_font.render(" • ", True, (40, 40, 40))
+    dot_text = score_font.render(" - ", True, (40, 40, 40))
     red_text = score_font.render(str(red_score), True, RED_COLOR)
 
     score_w = blue_text.get_width() + dot_text.get_width() + red_text.get_width()
@@ -250,10 +256,9 @@ def drawScoreBadge(screen, layout, blue_score, red_score, current_player):
     x += dot_text.get_width()
     score_surface.blit(red_text, (x, 0))
 
-    rotated = pygame.transform.rotate(score_surface, 90)
-    rx = badge_x + (badge_w - rotated.get_width()) // 2
-    ry = badge_y + (badge_h - rotated.get_height()) // 2
-    screen.blit(rotated, (rx, ry))
+    sx = badge_x + (badge_w - score_surface.get_width()) // 2
+    sy = badge_y + (badge_h - score_surface.get_height()) // 2
+    screen.blit(score_surface, (sx, sy))
 
 
 def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=None, difficulty=None, layout=None):
@@ -305,5 +310,8 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
             max_width=right_panel_width,
         )
         screen.blit(line_surface, (right_x, right_y + idx * 28))
+
+
+
 
 
