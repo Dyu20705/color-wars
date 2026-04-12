@@ -1,9 +1,16 @@
+import random
+
 from src.engine.explosion import resolve_explosions
 from src.engine.rules import PLAYER_BLUE, PLAYER_RED, get_move_dot_increment, get_valid_moves
 
 INF = 10**9
-MAX_DEPTH = 3
-MOVE_ORDER_TOP_K = 6
+BASE_DEPTH = 1
+LATE_GAME_DEPTH = 2
+LATE_GAME_BRANCH_THRESHOLD = 5
+MOVE_ORDER_TOP_K = 3
+POSITION_WEIGHT = 0.15
+HARD_TOP_RANDOM_PROB = 0.26
+HARD_RANDOM_POOL = 2
 
 
 def _simulate_move(board, dots, move, player):
@@ -21,6 +28,8 @@ def _simulate_move(board, dots, move, player):
 def _normalized_features(board, dots):
     size = len(board)
     total = max(1, size * size)
+    center = (size - 1) / 2.0
+    max_dist = max(1.0, center * 2.0)
 
     red_cells = 0
     blue_cells = 0
@@ -30,14 +39,18 @@ def _normalized_features(board, dots):
     blue_threat = 0
     red_stable = 0
     blue_stable = 0
+    position_norm = 0.0
 
     for r in range(size):
         for c in range(size):
             cell = board[r][c]
             dot = dots[r][c]
+            dist = abs(r - center) + abs(c - center)
+            proximity = 1.0 - (dist / max_dist)
             if cell == PLAYER_RED:
                 red_cells += 1
                 red_dots += dot
+                position_norm += proximity
                 if dot >= 3:
                     red_threat += 1
                 if dot <= 1:
@@ -45,6 +58,7 @@ def _normalized_features(board, dots):
             elif cell == PLAYER_BLUE:
                 blue_cells += 1
                 blue_dots += dot
+                position_norm -= proximity
                 if dot >= 3:
                     blue_threat += 1
                 if dot <= 1:
@@ -56,12 +70,13 @@ def _normalized_features(board, dots):
     danger_norm = blue_threat / total
     stability_norm = (red_stable - blue_stable) / total
     dot_norm = (red_dots - blue_dots) / (total * 4.0)
+    position_norm /= total
 
-    return material_norm, mobility_norm, threat_norm, danger_norm, stability_norm, dot_norm
+    return material_norm, mobility_norm, threat_norm, danger_norm, stability_norm, dot_norm, position_norm
 
 
 def evaluate_board(board, dots):
-    material_norm, mobility_norm, threat_norm, danger_norm, stability_norm, dot_norm = _normalized_features(
+    material_norm, mobility_norm, threat_norm, danger_norm, stability_norm, dot_norm, position_norm = _normalized_features(
         board, dots
     )
     return (
@@ -71,6 +86,7 @@ def evaluate_board(board, dots):
         - 0.90 * danger_norm
         + 0.45 * stability_norm
         + 0.20 * dot_norm
+        + POSITION_WEIGHT * position_norm
     )
 
 
@@ -127,7 +143,7 @@ def _alphabeta(board, dots, depth, alpha, beta, player):
 
 
 def get_hard_move(board, dots):
-    """Choose the strongest move found by a fixed-depth alpha-beta search."""
+    """Choose the strongest move found by an adaptive-depth alpha-beta search."""
     moves = get_valid_moves(board, PLAYER_RED)
     if not moves:
         return None
@@ -135,5 +151,11 @@ def get_hard_move(board, dots):
     if len(moves) == 1:
         return moves[0]
 
-    _, best_move = _alphabeta(board, dots, MAX_DEPTH, -INF, INF, PLAYER_RED)
+    # Keep HARD clearly stronger but not perfectly deterministic for balance targets.
+    random_pool = _ordered_moves(board, dots, PLAYER_RED, HARD_RANDOM_POOL)
+    if random_pool and random.random() < HARD_TOP_RANDOM_PROB:
+        return random.choice(random_pool)
+
+    depth = LATE_GAME_DEPTH if len(moves) <= LATE_GAME_BRANCH_THRESHOLD else BASE_DEPTH
+    _, best_move = _alphabeta(board, dots, depth, -INF, INF, PLAYER_RED)
     return best_move if best_move in moves else moves[0]
