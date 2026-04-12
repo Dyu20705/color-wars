@@ -1,3 +1,5 @@
+"""Test AI mode routing."""
+
 import unittest
 from unittest.mock import patch
 
@@ -5,6 +7,8 @@ from src.ai.ai import get_ai_move
 
 
 class TestAI(unittest.TestCase):
+    """Routes to correct difficulty level."""
+
     def test_mode_ez_selects_ez_ai(self):
         board = [[0]]
         dots = [[0]]

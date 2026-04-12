@@ -1,11 +1,14 @@
+"""Test Hard AI evaluation and decision making."""
+
 import unittest
 
 from src.ai.hard_AI import get_hard_move
-from src.engine.rules import PLAYER_BLUE
-from src.engine.rules import PLAYER_RED, get_valid_moves
+from src.engine.rules import PLAYER_BLUE, PLAYER_RED, get_valid_moves
 
 
 class TestHardAI(unittest.TestCase):
+    """Hard AI should make strong strategic decisions."""
+
     def test_hard_ai_returns_none_when_no_valid_moves(self):
         board = [
             [1, 1],

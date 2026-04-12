@@ -9,6 +9,7 @@ if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.game.loop import run_game
+from src.view.home_scene import run_home_menu
 
 
 def main():
@@ -16,7 +17,12 @@ def main():
 
     # Khởi tạo toàn bộ subsystem của pygame trước khi render/game loop.
     pygame.init()
-    run_game()
+    launch_config = run_home_menu()
+    if launch_config is not None:
+        run_game(
+            game_mode=launch_config.get("game_mode", "pvbot"),
+            difficulty=launch_config.get("difficulty", "easy"),
+        )
     # Giải phóng tài nguyên pygame trước khi thoát tiến trình.
     pygame.quit()
     sys.exit()

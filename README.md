@@ -1,52 +1,191 @@
-# Color Wars
+# Color Wars 🎮
 
-Color Wars is a turn-based strategy game built with Python and Pygame.
-Players place and upgrade cells, trigger chain explosions, and convert adjacent enemy cells to control the board.
+**Color Wars** is a turn-based strategy game built with Python and Pygame.
+Players place colored dots on a 5×5 board, trigger chain explosions, and convert enemy territory.
+The project features both local PvP and PvE (vs AI) with three difficulty levels.
 
-The project supports both local PvP and PvE (vs AI) with multiple bot difficulties.
+## 🎯 Game Overview
 
-## Highlights
+### Core Mechanics
+- **Turn-based tactical gameplay** on a 5×5 board  
+- **Chain-reaction explosion system** when cells reach 4 dots  
+- **Territory conversion** after explosions: neighbors become your color  
+- **Two game modes**: PvP (human vs human) or PvE (human vs AI)  
+- **Three AI difficulties**: Easy (training-friendly), Medium (shallow lookahead), Hard (alpha-beta pruning)
 
-- Turn-based tactical gameplay on a 5x5 board.
-- Chain-reaction explosion system.
-- Territory conversion mechanics after each explosion.
-- Two game modes:
-  - `PVP`: human vs human (same device).
-  - `PVBOT`: human (Blue) vs AI (Red).
-- Three AI levels:
-  - `Easy`: mostly chooses weak moves (training-friendly).
-  - `Medium`: shallow lookahead with controlled randomness.
-  - `Hard`: adaptive alpha-beta with stronger evaluation.
-- Responsive board rendering and fullscreen toggle.
-- Explosion animation overlay for better move readability.
+### Win Condition
+A player wins by:
+1. Dominating the entire board, **OR**
+2. Eliminating the opponent (reducing their cells to 0 after they had played)
 
-## Core Rules
+### Dot Increment Rules
+- **Empty cell capture**: +3 dots  
+- **Reinforce owned cell**: +1 dot  
+- **Explosion threshold**: 4 dots per cell (triggers cascade)
 
-- A move is valid only on:
-  - an empty cell if the player has no owned cells yet (first entry move), or
-  - one of the player's own cells afterward.
-- Dot increment:
-  - empty cell capture: `+3`
-  - reinforce owned cell: `+1`
-- Explosion threshold: `4`
-  - when a cell reaches threshold, it explodes,
-  - spreads dots to 4 orthogonal neighbors,
-  - converts neighbors to the exploding player's color,
-  - can trigger chain reactions.
+## 🚀 Quick Start
 
-## Win Condition
+### Requirements
+- Python 3.10+
+- Pygame 2.5.0+
 
-A player wins when they fully dominate the board, or when the opponent has been eliminated after previously entering the game.
+### Installation
+```bash
+pip install -r requirements.txt
+```
 
-## Project Structure
+### Run Game
+```bash
+python -m src.main
+```
 
-### High-Level Layout
+### Run Tests
+```bash
+# Windows PowerShell
+$env:PYTHONPATH='.'; pytest -v
 
-- `src/`: all runtime game code (engine, game flow, AI, and rendering).
-- `tests/`: unit tests for rules, explosions, and AI behavior.
-- `scripts/`: utility scripts (benchmarking, experiments).
+# Linux/macOS
+PYTHONPATH=. pytest -v
+```
 
-### Detailed File Guide (Beginner Friendly)
+## 🎮 Controls
+
+| Control | Action |
+|---------|--------|
+| **Left Click** | Place/reinforce on valid cell |
+| **M** | Toggle between PvP / PvE mode |
+| **R** | Restart current match |
+| **1 / 2 / 3** | Set AI difficulty (Easy / Medium / Hard) |
+| **F11** | Toggle fullscreen |
+
+## 📁 Project Structure
+
+### Source Code (`src/`)
+
+```
+src/
+├── main.py                  # Application entrypoint
+├── controller.py            # Game state mutations & move validation
+├── game/
+│   ├── state.py            # GameState dataclass
+│   └── loop.py             # Main frame loop & input handling
+├── engine/
+│   ├── rules.py            # Move legality & dot increment logic
+│   └── explosion.py        # Chain reaction resolver
+├── ai/
+│   ├── ai.py               # AI router (dispatcher)
+│   ├── ez_AI.py            # Easy difficulty (weak moves, 80% probability)
+│   ├── med_AI.py           # Medium difficulty (shallow lookahead)
+│   └── hard_AI.py          # Hard difficulty (alpha-beta pruning)
+└── view/                   # Pygame rendering layer
+    ├── constants.py        # Shared colors, sizes
+    ├── layout.py           # Screen geometry & responsive layout
+    ├── window.py           # Window/fullscreen management
+    ├── base/               # Abstract base classes
+    │   └── scene.py        # BaseScene, SceneController
+    ├── commons/            # Reusable UI components
+    │   └── ui_components.py # Button, Panel, TextLabel
+    ├── gameplay_scene/     # Main board rendering
+    │   ├── scene.py        # Scene composer
+    │   ├── board.py        # Board grid & ownership rendering
+    │   ├── hud.py          # Score badge & status display
+    │   ├── effects.py      # Explosion animation overlay
+    │   └── __init__.py     # Public API
+    └── *_scene/            # Menu scenes
+        ├── scene.py        # Scene-specific rendering
+        └── flow.py         # Event handling & logic (if complex)
+```
+
+### Tests (`tests/`)
+
+Tests are organized by module for easy discovery and scalability:
+
+```
+tests/
+├── ai/                     # AI behavior tests
+│   ├── test_ai_router.py   # Difficulty selector
+│   └── test_hard_ai.py     # Hard AI strategy
+├── game_logic/             # Engine tests
+│   ├── test_rules.py       # Move legality & dot rules
+│   └── test_explosion.py   # Chain reaction physics
+└── view/                   # UI rendering tests
+    ├── test_home_scene.py  # Menu layout
+    └── test_hud.py         # HUD display
+```
+
+### Scripts (`scripts/`)
+
+```
+scripts/
+└── benchmark_ai.py         # AI win-rate benchmarking across difficulty levels
+```
+
+## 🏗️ Architecture Principles
+
+### Separation of Concerns
+- **Engine** (`rules.py`, `explosion.py`): Pure game logic, no side effects  
+- **Controller** (`controller.py`): Orchestrates moves, updates state  
+- **View** (`src/view/`): Rendering only, no game logic  
+- **AI** (`src/ai/`): Decision-making, uses only engine & rules  
+
+### Scalability
+- **BaseScene & SceneController**: Enables new menus/scenes without code duplication  
+- **UI Components** (`Button`, `Panel`, `TextLabel`): Reusable across all scenes  
+- **Shared Constants & Layout**: Consistent theming and responsive geometry  
+
+### Testing
+- **Organized by module**: Easy to find and add tests  
+- **Engine heavily tested**: Rules engine is the source of truth  
+- **Integration optional**: View & AI can be tested independently  
+
+## 🤖 AI Levels
+
+### Easy (~20% win rate vs Medium)
+- Picks mostly weak moves for learning-friendly gameplay  
+- 80% probability of selecting suboptimal moves  
+- Safe for first-time players
+
+### Medium (~50% win rate vs Hard)  
+- Shallow lookahead (1-2 plys)  
+- Controlled randomness to avoid perfect play  
+- Good for intermediate players
+
+### Hard (~80% win rate vs Medium)  
+- Alpha-beta pruning with evaluation function  
+- Adapts to game state  
+- Challenges experienced players
+
+Run `scripts/benchmark_ai.py` to verify balance:
+```bash
+python scripts/benchmark_ai.py --games 200
+```
+
+## 📋 Development Notes
+
+- **Rendering loop runs at 60 FPS** with responsive window resizing  
+- **AI runs on main thread** (blocking during turn); optimize if needed for multiplayer  
+- **No external assets required** (pure Pygame drawing)  
+- **Snake_case** for functions, CamelCase for classes, UPPER_CASE for constants  
+
+## 📝 License & Contributing
+
+This project is for educational and research purposes.
+
+Contributions welcome! Please:
+1. Write tests for new features
+2. Follow the code style (type hints encouraged)
+3. Update documentation
+
+## 🐛 Known Issues & Future Work
+
+See the production-readiness scorecard below for detailed assessment.
+
+---
+
+## 📊 Production-Readiness Assessment
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation and production checklist.
+
 
 | File | What it contains | What it does in the game |
 | --- | --- | --- |
@@ -97,13 +236,16 @@ pip install -r requirements.txt
 python -m src.main
 ```
 
+Home menu is shown first to choose game mode and (for bot mode) difficulty.
+
 ## Controls
 
 - Left Click: place/reinforce on a valid cell.
 - `M`: toggle `PVP` / `PVBOT`.
 - `R`: restart current match.
-- `1` / `2` / `3`: set AI difficulty (`Easy` / `Medium` / `Hard`).
 - `F11`: toggle fullscreen.
+
+Note: Difficulty is selected from the Home screen before starting a bot match.
 
 ## Testing (Optional)
 

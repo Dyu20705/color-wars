@@ -4,8 +4,8 @@ import pygame
 
 from src.engine.rules import PLAYER_BLUE
 
-from .constants import BLUE_COLOR, RED_COLOR
-from .layout import _cell_center
+from ..constants import BLUE_COLOR, RED_COLOR
+from ..layout import _cell_center
 
 
 def drawExplosionOverlay(screen, layout, step, progress):

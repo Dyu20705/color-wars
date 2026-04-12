@@ -14,13 +14,18 @@ FPS = 60
 EXPLOSION_ANIMATION_MS = 140
 
 
-def run_game(game_mode=MODE_PVBOT):
+def run_game(game_mode=MODE_PVBOT, difficulty="easy"):
     """Run one match in pvp or pvbot mode."""
     if game_mode not in (MODE_PVP, MODE_PVBOT):
         game_mode = MODE_PVBOT
+    if difficulty not in ("easy", "medium", "hard", "ez", "med"):
+        difficulty = "easy"
+    if difficulty == "ez":
+        difficulty = "easy"
+    if difficulty == "med":
+        difficulty = "medium"
 
     state = GameState()
-    difficulty = "easy"
 
     is_fullscreen = False
     screen = view.drawScreen(fullscreen=is_fullscreen)
@@ -78,12 +83,6 @@ def run_game(game_mode=MODE_PVBOT):
                 elif event.key == pygame.K_m:
                     game_mode = MODE_PVP if game_mode == MODE_PVBOT else MODE_PVBOT
                     state = GameState()
-                elif event.key == pygame.K_1:
-                    difficulty = "easy"
-                elif event.key == pygame.K_2:
-                    difficulty = "medium"
-                elif event.key == pygame.K_3:
-                    difficulty = "hard"
                 elif event.key == pygame.K_F11:
                     screen, is_fullscreen = view.toggle_fullscreen(is_fullscreen, screen)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:

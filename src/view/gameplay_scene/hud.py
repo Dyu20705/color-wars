@@ -4,7 +4,23 @@ import pygame
 
 from src.engine.rules import PLAYER_BLUE
 
-from .constants import BLUE_COLOR, HUD_TEXT_COLOR, RED_COLOR
+from ..constants import BLUE_COLOR, HUD_TEXT_COLOR, RED_COLOR
+
+
+def get_status_lines(game_mode=None, difficulty=None, winner=None):
+    """Build status lines shown on the left HUD panel."""
+    mode_name = "PVP" if game_mode == "pvp" else "PVBOT"
+    difficulty_name = (difficulty or "easy").upper()
+    if winner is None:
+        return [f"Mode: {mode_name}", f"Bot: {difficulty_name}"]
+
+    winner_name = "Blue" if winner == PLAYER_BLUE else "Red"
+    return [f"Mode: {mode_name}", f"Bot: {difficulty_name}", f"Winner: {winner_name}"]
+
+
+def get_control_lines():
+    """Build controls shown on the right HUD panel."""
+    return ["M: Switch mode", "R: Restart", "F11: Fullscreen"]
 
 
 def _render_fitted_line(text, color, preferred_size, min_size, max_width):
@@ -78,13 +94,7 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
 
     drawScoreBadge(screen, layout, blue_score, red_score, current_player)
 
-    mode_name = "PVP" if game_mode == "pvp" else "PVBOT"
-    difficulty_name = (difficulty or "easy").upper()
-    if winner is None:
-        status_lines = [f"Mode: {mode_name}", f"Bot: {difficulty_name}"]
-    else:
-        winner_name = "Blue" if winner == PLAYER_BLUE else "Red"
-        status_lines = [f"Mode: {mode_name}", f"Bot: {difficulty_name}", f"Winner: {winner_name}"]
+    status_lines = get_status_lines(game_mode, difficulty, winner)
 
     left_x = side_margin
     left_y = start_y + 12
@@ -98,7 +108,7 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
         )
         screen.blit(line_surface, (left_x, left_y + idx * 28))
 
-    control_lines = ["M: Switch mode", "R: Restart", "1/2/3: EZ/MED/HARD"]
+    control_lines = get_control_lines()
     right_x = start_x + board_size + side_margin
     right_y = start_y + 12
     for idx, line in enumerate(control_lines):

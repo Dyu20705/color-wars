@@ -4,7 +4,7 @@ import pygame
 
 from src.engine.rules import EMPTY, PLAYER_BLUE
 
-from .constants import BLUE_COLOR, BORDER_WIDTH, CELL_BLUE_TINT, CELL_BORDER_COLOR, CELL_EMPTY_COLOR, CELL_RED_TINT, RED_COLOR
+from ..constants import BLUE_COLOR, BORDER_WIDTH, CELL_BLUE_TINT, CELL_BORDER_COLOR, CELL_EMPTY_COLOR, CELL_RED_TINT, RED_COLOR
 
 
 def drawNode(screen, rect, fill_color):
