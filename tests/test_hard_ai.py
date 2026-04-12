@@ -1,6 +1,7 @@
 import unittest
 
 from src.ai.hard_AI import get_hard_move
+from src.engine.rules import PLAYER_BLUE
 from src.engine.rules import PLAYER_RED, get_valid_moves
 
 
@@ -33,6 +34,18 @@ class TestHardAI(unittest.TestCase):
         valid_moves = set(get_valid_moves(board, PLAYER_RED))
 
         self.assertIn(move, valid_moves)
+
+    def test_hard_ai_prefers_immediate_gain_when_choice_is_clear(self):
+        board = [
+            [PLAYER_RED, 0],
+            [0, PLAYER_BLUE],
+        ]
+        dots = [
+            [3, 0],
+            [0, 1],
+        ]
+
+        self.assertEqual(get_hard_move(board, dots), (0, 0))
 
 
 if __name__ == "__main__":

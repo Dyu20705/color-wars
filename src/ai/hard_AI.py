@@ -1,23 +1,9 @@
-import random
-import time
-
 from src.engine.explosion import resolve_explosions
 from src.engine.rules import PLAYER_BLUE, PLAYER_RED, get_move_dot_increment, get_valid_moves
 
 INF = 10**9
-MAX_DEPTH = 4
-MAX_THINK_TIME_SEC = 0.045
-ROOT_TOP_K = 8
-INNER_TOP_K = 6
-NOISE_SCORE_DIFF = 0.08
-
-_TRANSPOSITION_TABLE = {}
-
-
-def _state_key(board, dots, player, depth):
-    board_key = tuple(tuple(row) for row in board)
-    dots_key = tuple(tuple(row) for row in dots)
-    return board_key, dots_key, player, depth
+MAX_DEPTH = 3
+MOVE_ORDER_TOP_K = 6
 
 
 def _simulate_move(board, dots, move, player):
@@ -74,7 +60,7 @@ def _normalized_features(board, dots):
     return material_norm, mobility_norm, threat_norm, danger_norm, stability_norm, dot_norm
 
 
-def evaluate(board, dots):
+def evaluate_board(board, dots):
     material_norm, mobility_norm, threat_norm, danger_norm, stability_norm, dot_norm = _normalized_features(
         board, dots
     )
@@ -88,9 +74,9 @@ def evaluate(board, dots):
     )
 
 
-def _heuristic_move_score(board, dots, move, player):
+def _score_move(board, dots, move, player):
     next_board, next_dots = _simulate_move(board, dots, move, player)
-    score = evaluate(next_board, next_dots)
+    score = evaluate_board(next_board, next_dots)
     return score if player == PLAYER_RED else -score
 
 
@@ -98,114 +84,56 @@ def _ordered_moves(board, dots, player, top_k):
     moves = get_valid_moves(board, player)
     if not moves:
         return []
-    scored = [(move, _heuristic_move_score(board, dots, move, player)) for move in moves]
+
+    scored = [(move, _score_move(board, dots, move, player)) for move in moves]
     scored.sort(key=lambda item: item[1], reverse=True)
     return [move for move, _ in scored[: min(top_k, len(scored))]]
 
 
-def _alphabeta(board, dots, depth, alpha, beta, player, start_time, max_time):
-    if time.time() - start_time >= max_time:
-        raise TimeoutError
-
-    key = _state_key(board, dots, player, depth)
-    cached = _TRANSPOSITION_TABLE.get(key)
-    if cached is not None:
-        return cached
-
+def _alphabeta(board, dots, depth, alpha, beta, player):
     moves = get_valid_moves(board, player)
     if depth == 0 or not moves:
-        score = evaluate(board, dots)
-        result = (score, None)
-        _TRANSPOSITION_TABLE[key] = result
-        return result
+        return evaluate_board(board, dots), None
 
     next_player = PLAYER_BLUE if player == PLAYER_RED else PLAYER_RED
-    ordered = _ordered_moves(board, dots, player, INNER_TOP_K)
+    ordered = _ordered_moves(board, dots, player, MOVE_ORDER_TOP_K)
 
     if player == PLAYER_RED:
         best_score = -INF
         best_move = None
         for move in ordered:
             nboard, ndots = _simulate_move(board, dots, move, player)
-            score, _ = _alphabeta(nboard, ndots, depth - 1, alpha, beta, next_player, start_time, max_time)
+            score, _ = _alphabeta(nboard, ndots, depth - 1, alpha, beta, next_player)
             if score > best_score:
                 best_score = score
                 best_move = move
             alpha = max(alpha, best_score)
-            if beta <= alpha:
+            if alpha >= beta:
                 break
-    else:
-        best_score = INF
-        best_move = None
-        for move in ordered:
-            nboard, ndots = _simulate_move(board, dots, move, player)
-            score, _ = _alphabeta(nboard, ndots, depth - 1, alpha, beta, next_player, start_time, max_time)
-            if score < best_score:
-                best_score = score
-                best_move = move
-            beta = min(beta, best_score)
-            if beta <= alpha:
-                break
+        return best_score, best_move
 
-    result = (best_score, best_move)
-    _TRANSPOSITION_TABLE[key] = result
-    return result
-
-
-def _search_root(board, dots, depth, start_time, max_time):
-    root_moves = _ordered_moves(board, dots, PLAYER_RED, ROOT_TOP_K)
-    if not root_moves:
-        return None, []
-
-    scored = []
-    for move in root_moves:
-        if time.time() - start_time >= max_time:
-            raise TimeoutError
-        nboard, ndots = _simulate_move(board, dots, move, PLAYER_RED)
-        score, _ = _alphabeta(nboard, ndots, depth - 1, -INF, INF, PLAYER_BLUE, start_time, max_time)
-        scored.append((move, score))
-
-    scored.sort(key=lambda item: item[1], reverse=True)
-    return scored[0][0], scored
-
-
-def _apply_noise(scored_moves):
-    if len(scored_moves) < 2:
-        return scored_moves[0][0] if scored_moves else None
-
-    best_move, best_score = scored_moves[0]
-    second_move, second_score = scored_moves[1]
-    if abs(best_score - second_score) < NOISE_SCORE_DIFF:
-        return random.choices([best_move, second_move], weights=[0.85, 0.15], k=1)[0]
-    return best_move
-
-
-def iterative_deepening(board, dots, max_time=MAX_THINK_TIME_SEC):
-    start_time = time.time()
-    _TRANSPOSITION_TABLE.clear()
-
-    fallback_moves = get_valid_moves(board, PLAYER_RED)
-    if not fallback_moves:
-        return None
-
-    best_move = fallback_moves[0]
-    best_scored = [(best_move, evaluate(*_simulate_move(board, dots, best_move, PLAYER_RED)))]
-
-    for depth in range(1, MAX_DEPTH + 1):
-        try:
-            move, scored = _search_root(board, dots, depth, start_time, max_time)
-        except TimeoutError:
+    best_score = INF
+    best_move = None
+    for move in ordered:
+        nboard, ndots = _simulate_move(board, dots, move, player)
+        score, _ = _alphabeta(nboard, ndots, depth - 1, alpha, beta, next_player)
+        if score < best_score:
+            best_score = score
+            best_move = move
+        beta = min(beta, best_score)
+        if alpha >= beta:
             break
-        if move is None:
-            break
-        best_move = move
-        best_scored = scored
-        if time.time() - start_time >= max_time:
-            break
-
-    chosen = _apply_noise(best_scored)
-    return chosen if chosen in fallback_moves else best_move
+    return best_score, best_move
 
 
 def get_hard_move(board, dots):
-    return iterative_deepening(board, dots)
+    """Choose the strongest move found by a fixed-depth alpha-beta search."""
+    moves = get_valid_moves(board, PLAYER_RED)
+    if not moves:
+        return None
+
+    if len(moves) == 1:
+        return moves[0]
+
+    _, best_move = _alphabeta(board, dots, MAX_DEPTH, -INF, INF, PLAYER_RED)
+    return best_move if best_move in moves else moves[0]
