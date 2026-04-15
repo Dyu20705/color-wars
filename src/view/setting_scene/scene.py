@@ -2,7 +2,7 @@
 
 import pygame
 
-from src.view.commons import make_icon_surface
+from src.view.commons import blit_fitted_text, draw_interactive_button, make_icon_surface
 
 
 def draw_settings_icon(screen, rect, colors):
@@ -13,37 +13,139 @@ def draw_settings_icon(screen, rect, colors):
 
 def draw_setting_scene(screen, panel, fonts, colors, back_rect, back_icon, controls):
     """Draw settings scene content."""
-    screen.blit(back_icon, back_rect.topleft)
-    title = fonts["main"].render("Settings", True, colors["text_main"])
-    subtitle = fonts["body"].render("Audio, display, and match preferences", True, colors["subtitle"])
-    hint = fonts["body"].render("Music control is live, future toggles can be added here.", True, colors["text_main"])
+    show_back = controls.get("show_back", True)
 
-    screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 84)))
-    screen.blit(subtitle, subtitle.get_rect(center=(panel.centerx, panel.y + 150)))
-    screen.blit(hint, hint.get_rect(center=(panel.centerx, panel.y + 184)))
+    shade = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+    shade.fill((8, 16, 26, 150))
+    screen.blit(shade, (0, 0))
+
+    pygame.draw.rect(screen, (28, 39, 53), panel, border_radius=18)
+    pygame.draw.rect(screen, (160, 185, 208), panel, 3, border_radius=18)
+
+    if show_back and back_icon is not None and back_rect is not None:
+        screen.blit(back_icon, back_rect.topleft)
+
+    title_y = panel.y + int(panel.height * 0.12)
+    subtitle_y = panel.y + int(panel.height * 0.20)
+    hint_y = panel.y + int(panel.height * 0.27)
+    section_y = panel.y + int(panel.height * 0.42)
+
+    # Section backdrop to visually group sound controls.
+    section_rect = pygame.Rect(panel.x + 28, section_y - 34, panel.width - 56, int(panel.height * 0.28))
+    pygame.draw.rect(screen, (34, 48, 64), section_rect, border_radius=14)
+    pygame.draw.rect(screen, (96, 124, 148), section_rect, 2, border_radius=14)
+    blit_fitted_text(
+        screen,
+        fonts["main"],
+        "Cài đặt trận đấu",
+        (240, 247, 255),
+        (panel.centerx, title_y),
+        panel.width - 42,
+        52,
+    )
+    blit_fitted_text(
+        screen,
+        fonts["body"],
+        "Âm thanh và tùy chọn trận đấu",
+        (198, 216, 232),
+        (panel.centerx, subtitle_y),
+        panel.width - 42,
+        36,
+    )
+    blit_fitted_text(
+        screen,
+        fonts["body"],
+        "Nhấn Áp dụng để lưu thay đổi.",
+        (220, 234, 246),
+        (panel.centerx, hint_y),
+        panel.width - 42,
+        34,
+    )
 
     checkbox_rect = controls["sound_checkbox"]
     slider_rect = controls["volume_slider"]
     knob_x = controls["volume_knob_x"]
     sound_enabled = controls["sound_enabled"]
     sound_volume = controls["sound_volume"]
+    apply_btn = controls["apply_btn"]
 
-    pygame.draw.rect(screen, (238, 244, 248), checkbox_rect, border_radius=5)
-    pygame.draw.rect(screen, colors["btn_slate"], checkbox_rect, 2, border_radius=5)
+    # Sound section heading and value are split to improve readability.
+    sound_label_center = (slider_rect.centerx - 64, section_y - 6)
+    value_label_center = (slider_rect.centerx + 78, section_y - 6)
+    blit_fitted_text(
+        screen,
+        fonts["body"],
+        "Âm thanh",
+        (255, 255, 255),
+        sound_label_center,
+        slider_rect.width // 2,
+        30,
+    )
+    blit_fitted_text(
+        screen,
+        fonts["body"],
+        f"{int(sound_volume * 100)}%",
+        (150, 206, 255),
+        value_label_center,
+        slider_rect.width // 3,
+        30,
+    )
+
+    # Simple speaker glyph to make the sound section easier to scan.
+    speaker_x = slider_rect.x - 20
+    speaker_y = section_y - 16
+    pygame.draw.polygon(
+        screen,
+        (220, 236, 249),
+        [
+            (speaker_x, speaker_y + 8),
+            (speaker_x + 8, speaker_y + 8),
+            (speaker_x + 14, speaker_y + 3),
+            (speaker_x + 14, speaker_y + 21),
+            (speaker_x + 8, speaker_y + 16),
+            (speaker_x, speaker_y + 16),
+        ],
+    )
+    pygame.draw.arc(screen, (150, 206, 255), (speaker_x + 12, speaker_y + 4, 12, 14), -1.0, 1.0, 2)
+
+    pygame.draw.rect(screen, (230, 238, 246), checkbox_rect, border_radius=5)
+    pygame.draw.rect(screen, (110, 136, 158), checkbox_rect, 2, border_radius=5)
     if sound_enabled:
         tick_points = [
             (checkbox_rect.x + 5, checkbox_rect.centery),
             (checkbox_rect.x + 10, checkbox_rect.bottom - 6),
             (checkbox_rect.right - 5, checkbox_rect.y + 6),
         ]
-        pygame.draw.lines(screen, colors["btn_green"], False, tick_points, 3)
+        pygame.draw.lines(screen, (75, 165, 98), False, tick_points, 3)
 
-    volume_label = fonts["body"].render(f"Volume {int(sound_volume * 100)}%", True, colors["text_main"])
-    screen.blit(volume_label, (slider_rect.x, slider_rect.y - 30))
-
-    pygame.draw.rect(screen, (216, 224, 230), slider_rect, border_radius=8)
+    pygame.draw.rect(screen, (120, 140, 160), slider_rect, border_radius=10)
     fill_w = max(1, knob_x - slider_rect.x)
     fill_rect = pygame.Rect(slider_rect.x, slider_rect.y, fill_w, slider_rect.height)
-    pygame.draw.rect(screen, colors["btn_blue"], fill_rect, border_radius=8)
-    pygame.draw.circle(screen, (255, 255, 255), (knob_x, slider_rect.centery), 12)
-    pygame.draw.circle(screen, colors["btn_blue"], (knob_x, slider_rect.centery), 9)
+    pygame.draw.rect(screen, (90, 170, 255), fill_rect, border_radius=10)
+    pygame.draw.circle(screen, (170, 216, 255), (knob_x, slider_rect.centery), 16)
+    pygame.draw.circle(screen, (255, 255, 255), (knob_x, slider_rect.centery), 14)
+    pygame.draw.circle(screen, (90, 170, 255), (knob_x, slider_rect.centery), 10)
+
+    draw_interactive_button(
+        screen,
+        apply_btn,
+        "Áp dụng",
+        (90, 170, 255),
+        fonts["body"],
+        border_radius=14,
+    )
+
+    # Small confirmation mark near the apply area.
+    mark_center = (apply_btn.right + 18, apply_btn.centery)
+    pygame.draw.circle(screen, (90, 170, 255), mark_center, 9)
+    pygame.draw.lines(
+        screen,
+        (255, 255, 255),
+        False,
+        [
+            (mark_center[0] - 4, mark_center[1]),
+            (mark_center[0] - 1, mark_center[1] + 3),
+            (mark_center[0] + 5, mark_center[1] - 3),
+        ],
+        2,
+    )

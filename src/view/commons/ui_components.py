@@ -3,6 +3,72 @@
 import pygame
 
 
+def _mix_color(base, delta):
+    return tuple(max(0, min(255, c + delta)) for c in base)
+
+
+def fit_surface(surface: pygame.Surface, max_width: int, max_height: int) -> pygame.Surface:
+    """Scale a rendered surface down to fit bounds while preserving aspect ratio."""
+    if max_width <= 0 or max_height <= 0:
+        return pygame.Surface((1, 1), pygame.SRCALPHA)
+
+    width = surface.get_width()
+    height = surface.get_height()
+    if width <= max_width and height <= max_height:
+        return surface
+
+    scale = min(max_width / max(1, width), max_height / max(1, height))
+    target_w = max(1, int(width * scale))
+    target_h = max(1, int(height * scale))
+    return pygame.transform.smoothscale(surface, (target_w, target_h))
+
+
+def blit_fitted_text(
+    screen: pygame.Surface,
+    font: pygame.font.Font,
+    text: str,
+    color: tuple,
+    center: tuple,
+    max_width: int,
+    max_height: int,
+):
+    """Render and blit text centered, scaling down if it overflows."""
+    rendered = font.render(text, True, color)
+    fitted = fit_surface(rendered, max_width, max_height)
+    screen.blit(fitted, fitted.get_rect(center=center))
+
+
+def draw_interactive_button(
+    screen: pygame.Surface,
+    rect: pygame.Rect,
+    label: str,
+    base_color: tuple,
+    font: pygame.font.Font,
+    text_color: tuple = (255, 255, 255),
+    border_color: tuple = (255, 255, 255),
+    border_radius: int = 12,
+):
+    """Draw a button with shared hover/pressed visual feedback and fitted label."""
+    mouse_pos = pygame.mouse.get_pos()
+    is_down = bool(pygame.mouse.get_pressed(num_buttons=3)[0])
+    is_hovered = rect.collidepoint(mouse_pos)
+
+    draw_rect = rect.copy()
+    fill = base_color
+    if is_hovered:
+        fill = _mix_color(fill, 14)
+    if is_hovered and is_down:
+        fill = _mix_color(fill, -12)
+        draw_rect.y += 1
+
+    pygame.draw.rect(screen, fill, draw_rect, border_radius=border_radius)
+    pygame.draw.rect(screen, border_color, draw_rect, 2, border_radius=border_radius)
+
+    label_surface = font.render(label, True, text_color)
+    fitted = fit_surface(label_surface, draw_rect.width - 14, draw_rect.height - 10)
+    screen.blit(fitted, fitted.get_rect(center=draw_rect.center))
+
+
 class Button:
     """Clickable button component with text and styling."""
 

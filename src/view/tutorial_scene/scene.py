@@ -2,7 +2,7 @@
 
 import pygame
 
-from src.view.commons import make_icon_surface
+from src.view.commons import blit_fitted_text, make_icon_surface
 
 
 def draw_tutorial_icon(screen, rect, colors, font=None):
@@ -28,20 +28,45 @@ def _render_wrapped_lines(font, text, color, max_width):
     return lines
 
 
+def _line_color(line):
+    lowered = line.lower()
+    if "nổ dây chuyền" in lowered or "combo" in lowered:
+        return (255, 208, 132)
+    if "4 chấm" in lowered:
+        return (255, 188, 120)
+    if "phím tắt" in lowered:
+        return (166, 216, 255)
+    return (238, 246, 255)
+
+
 def draw_tutorial_scene(screen, panel, fonts, colors, back_rect, tutorial_lines, back_icon):
     """Draw tutorial content scene."""
     screen.blit(back_icon, back_rect.topleft)
-    title = fonts["main"].render("How to Play", True, colors["text_main"])
-    subtitle = fonts["body"].render("Core mechanics, strategy, and shortcuts", True, colors["subtitle"])
-    screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 84)))
-    screen.blit(subtitle, subtitle.get_rect(center=(panel.centerx, panel.y + 120)))
+    blit_fitted_text(
+        screen,
+        fonts["main"],
+        "Cách chơi",
+        colors["text_main"],
+        (panel.centerx, panel.y + 84),
+        panel.width - 48,
+        50,
+    )
+    blit_fitted_text(
+        screen,
+        fonts["body"],
+        "Cơ chế cơ bản, mẹo chiến thuật và phím tắt",
+        colors["subtitle"],
+        (panel.centerx, panel.y + 120),
+        panel.width - 64,
+        32,
+    )
 
     line_y = panel.y + 156
-    text_left = panel.x + 32
-    max_width = panel.width - 64
-    for line in tutorial_lines:
-        wrapped = _render_wrapped_lines(fonts["body"], line, colors["text_main"], max_width)
+    max_width = panel.width - 120
+    for idx, line in enumerate(tutorial_lines, start=1):
+        rendered_color = _line_color(line)
+        wrapped = _render_wrapped_lines(fonts["body"], f"{idx}. {line}", rendered_color, max_width)
         for text in wrapped:
-            screen.blit(text, (text_left, line_y))
-            line_y += max(20, int(panel.height * 0.044))
-        line_y += 8
+            screen.blit(text, text.get_rect(center=(panel.centerx, line_y + text.get_height() // 2)))
+            line_y += max(22, int(panel.height * 0.05))
+        line_y += 10

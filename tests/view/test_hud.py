@@ -15,16 +15,16 @@ class TestHudView(unittest.TestCase):
     def test_control_lines_do_not_contain_difficulty_hotkeys(self):
         """Control hints do not expose difficulty hotkeys."""
         controls = get_control_lines()
-        self.assertIn("M: Switch mode", controls)
-        self.assertIn("R: Restart", controls)
+        self.assertIn("M: Đổi chế độ", controls)
+        self.assertIn("R: Chơi lại", controls)
         self.assertNotIn("1/2/3: EZ/MED/HARD", controls)
 
     def test_status_lines_include_winner_when_present(self):
         """Winner info appears in HUD when game ends."""
         lines = get_status_lines(game_mode="pvp", difficulty="medium", winner=1)
-        self.assertIn("Mode: PVP", lines)
-        self.assertIn("Bot: MEDIUM", lines)
-        self.assertIn("Winner: Blue", lines)
+        self.assertIn("Chế độ: PvP", lines)
+        self.assertIn("Thắng: Xanh", lines)
+        self.assertNotIn("Độ khó bot: TRUNG BÌNH", lines)
 
     def test_move_history_entries_format_recent_moves(self):
         """Recent moves are rendered with player tag and tuple-style coordinates."""

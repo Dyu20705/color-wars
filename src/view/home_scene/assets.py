@@ -14,10 +14,11 @@ def get_asset_path(*parts):
 
 
 def get_home_asset_path(filename):
-    """Resolve home asset from asset/home or fallback to asset root."""
-    home_path = ASSETS_ROOT / "home" / filename
-    if home_path.exists():
-        return home_path
+    """Resolve a home asset from the new image/gameplay layout or fallback to root."""
+    for folder in ("img", "gameplay", "home"):
+        candidate = ASSETS_ROOT / folder / filename
+        if candidate.exists():
+            return candidate
     return ASSETS_ROOT / filename
 
 

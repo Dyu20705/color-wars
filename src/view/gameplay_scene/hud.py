@@ -4,24 +4,35 @@ import pygame
 
 from src.game.analysis import estimate_win_chances
 from src.engine.rules import PLAYER_BLUE
+from src.view.commons import ensure_readable_text, suggest_safe_palette
 
 from ..constants import BLUE_COLOR, HUD_TEXT_COLOR, RED_COLOR
 
 
 def get_status_lines(game_mode=None, difficulty=None, winner=None):
     """Build status lines shown on the left HUD panel."""
-    mode_name = "PVP" if game_mode == "pvp" else "PVBOT"
-    difficulty_name = (difficulty or "easy").upper()
-    if winner is None:
-        return [f"Mode: {mode_name}", f"Bot: {difficulty_name}"]
+    mode_name = "PvP" if game_mode == "pvp" else "PvE"
+    if game_mode == "pvp":
+        if winner is None:
+            return [f"Chế độ: {mode_name}"]
+        winner_name = "Xanh" if winner == PLAYER_BLUE else "Đỏ"
+        return [f"Chế độ: {mode_name}", f"Thắng: {winner_name}"]
 
-    winner_name = "Blue" if winner == PLAYER_BLUE else "Red"
-    return [f"Mode: {mode_name}", f"Bot: {difficulty_name}", f"Winner: {winner_name}"]
+    difficulty_name = {
+        "easy": "DỄ",
+        "medium": "TRUNG BÌNH",
+        "hard": "KHÓ",
+    }.get((difficulty or "easy").lower(), (difficulty or "easy").upper())
+    if winner is None:
+        return [f"Chế độ: {mode_name}", f"Độ khó bot: {difficulty_name}"]
+
+    winner_name = "Xanh" if winner == PLAYER_BLUE else "Đỏ"
+    return [f"Chế độ: {mode_name}", f"Độ khó bot: {difficulty_name}", f"Thắng: {winner_name}"]
 
 
 def get_control_lines():
     """Build controls shown on the right HUD panel."""
-    return ["M: Switch mode", "R: Restart", "F11: Fullscreen"]
+    return ["M: Đổi chế độ", "R: Chơi lại", "H: Hướng dẫn", "F11: Toàn màn hình"]
 
 
 def get_move_history_entries(state, limit=6):
@@ -106,14 +117,17 @@ def draw_win_rate_panel(screen, state, layout, game_mode=None, difficulty=None):
     side_margin = layout["side_margin"]
 
     panel_x = start_x + board_size + side_margin
-    panel_w = max(150, width - panel_x - side_margin)
+    panel_w = width - panel_x - side_margin
+    if panel_w < 90:
+        return
+    panel_w = max(110, panel_w)
     panel_h = max(210, int(height * 0.56))
     panel = pygame.Rect(panel_x, start_y, panel_w, panel_h)
     _draw_panel(screen, panel)
 
     title_font = pygame.font.SysFont("segoeui", max(15, int(height * 0.028)), bold=True)
     body_font = pygame.font.SysFont("segoeui", max(13, int(height * 0.024)), bold=True)
-    title = title_font.render("Win chance", True, HUD_TEXT_COLOR)
+    title = title_font.render("Tỷ lệ thắng", True, HUD_TEXT_COLOR)
     screen.blit(title, (panel.x + 14, panel.y + 12))
 
     blue_chance, red_chance = estimate_win_chances(state)
@@ -146,7 +160,10 @@ def draw_move_history_panel(screen, state, layout):
     width = layout["width"]
     height = layout["height"]
 
-    panel_w = max(160, board_x - side_margin * 2)
+    panel_w = board_x - side_margin * 2
+    if panel_w < 100:
+        return
+    panel_w = max(120, panel_w)
     panel_h = min(190, max(120, int(height * 0.26)))
     panel_x = side_margin
     panel_y = min(height - panel_h - side_margin, board_y + board_size - panel_h)
@@ -155,12 +172,12 @@ def draw_move_history_panel(screen, state, layout):
 
     title_font = pygame.font.SysFont("segoeui", max(15, int(height * 0.028)), bold=True)
     item_font = pygame.font.SysFont("consolas", max(12, int(height * 0.022)))
-    title = title_font.render("Recent moves", True, HUD_TEXT_COLOR)
+    title = title_font.render("Nước đi gần đây", True, HUD_TEXT_COLOR)
     screen.blit(title, (panel.x + 14, panel.y + 12))
 
     entries = get_move_history_entries(state, limit=6)
     if not entries:
-        empty = item_font.render("No moves yet", True, HUD_TEXT_COLOR)
+        empty = item_font.render("Chưa có nước đi", True, HUD_TEXT_COLOR)
         screen.blit(empty, (panel.x + 14, panel.y + 44))
         return
 
@@ -180,22 +197,27 @@ def drawHud(screen, state, current_player, blue_score, red_score, winner, game_m
     width = layout["width"]
     side_margin = layout["side_margin"]
 
-    left_panel_width = max(120, start_x - side_margin * 2)
+    left_panel_width = start_x - side_margin * 2
+    if left_panel_width < 80:
+        left_panel_width = 0
     drawScoreBadge(screen, layout, blue_score, red_score, current_player)
 
     status_lines = get_status_lines(game_mode, difficulty, winner)
 
-    left_x = side_margin
-    left_y = start_y + 12
-    for idx, line in enumerate(status_lines):
-        line_surface = _render_fitted_line(
-            line,
-            HUD_TEXT_COLOR,
-            preferred_size=max(16, int(layout["height"] * 0.032)),
-            min_size=12,
-            max_width=left_panel_width,
-        )
-        screen.blit(line_surface, (left_x, left_y + idx * 28))
+    palette = suggest_safe_palette()
+    status_color = ensure_readable_text(palette["surface"], preferred=HUD_TEXT_COLOR)
+    if left_panel_width > 0:
+        left_x = side_margin
+        left_y = start_y + 12
+        for idx, line in enumerate(status_lines):
+            line_surface = _render_fitted_line(
+                line,
+                status_color,
+                preferred_size=max(16, int(layout["height"] * 0.032)),
+                min_size=12,
+                max_width=left_panel_width,
+            )
+            screen.blit(line_surface, (left_x, left_y + idx * 28))
 
     draw_win_rate_panel(screen, state, layout, game_mode, difficulty)
     draw_move_history_panel(screen, state, layout)

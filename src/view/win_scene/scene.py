@@ -3,20 +3,21 @@
 import pygame
 
 from src.engine.rules import PLAYER_BLUE
+from src.view.commons import blit_fitted_text, draw_interactive_button
 
 
 def get_win_action_rects(screen):
     """Compute clickable controls for the end screen."""
     width, height = screen.get_size()
-    panel_w = min(680, int(width * 0.68))
-    panel_h = min(440, int(height * 0.62))
+    panel_w = min(620, width - 36)
+    panel_h = min(360, height - 36)
     panel = pygame.Rect((width - panel_w) // 2, (height - panel_h) // 2, panel_w, panel_h)
 
-    restart_rect = pygame.Rect(0, 0, 72, 72)
-    restart_rect.center = (panel.centerx, panel.y + int(panel_h * 0.55))
+    restart_rect = pygame.Rect(0, 0, 220, 56)
+    restart_rect.center = (panel.centerx, panel.y + int(panel_h * 0.72))
 
-    home_rect = pygame.Rect(0, 0, 220, 58)
-    home_rect.center = (panel.centerx, panel.bottom - 72)
+    home_rect = pygame.Rect(0, 0, 150, 44)
+    home_rect.center = (panel.centerx, panel.bottom - 40)
 
     return {
         "panel": panel,
@@ -36,31 +37,62 @@ def draw_win_scene(screen, winner, icons):
     home_rect = rects["home_rect"]
 
     shade = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-    shade.fill((7, 12, 21, 150))
+    shade.fill((8, 16, 26, 150))
     screen.blit(shade, (0, 0))
 
-    pygame.draw.rect(screen, (246, 250, 253), panel, border_radius=26)
+    pygame.draw.rect(screen, (28, 39, 53), panel, border_radius=18)
+    pygame.draw.rect(screen, (160, 185, 208), panel, 3, border_radius=18)
 
     accent = (46, 125, 193) if winner == PLAYER_BLUE else (206, 79, 79)
-    pygame.draw.rect(screen, accent, panel, 4, border_radius=26)
+    title_font = pygame.font.SysFont("segoeui", max(34, int(panel.height * 0.13)), bold=True)
+    body_font = pygame.font.SysFont("segoeui", max(18, int(panel.height * 0.07)), bold=True)
+    button_font = pygame.font.SysFont("segoeui", 30, bold=True)
+    small_button_font = pygame.font.SysFont("segoeui", 22, bold=True)
 
-    title_font = pygame.font.SysFont("segoeui", max(34, int(panel.height * 0.1)), bold=True)
-    body_font = pygame.font.SysFont("segoeui", max(18, int(panel.height * 0.06)), bold=True)
-    button_font = pygame.font.SysFont("segoeui", 26, bold=True)
+    winner_name = "NGƯỜI CHƠI XANH" if winner == PLAYER_BLUE else "NGƯỜI CHƠI ĐỎ"
+    blit_fitted_text(
+        screen,
+        title_font,
+        "TRẬN ĐÃ KẾT THÚC",
+        (240, 247, 255),
+        (panel.centerx, panel.y + 64),
+        panel.width - 30,
+        56,
+    )
+    blit_fitted_text(
+        screen,
+        body_font,
+        f"Bên thắng: {winner_name}",
+        accent,
+        (panel.centerx, panel.y + 118),
+        panel.width - 44,
+        42,
+    )
+    blit_fitted_text(
+        screen,
+        body_font,
+        "TIẾP ĐÊ SỢ À?",
+        (198, 216, 232),
+        (panel.centerx, panel.y + 156),
+        panel.width - 44,
+        38,
+    )
 
-    winner_name = "BLUE PLAYER" if winner == PLAYER_BLUE else "RED PLAYER"
-    title = title_font.render("MATCH ENDED", True, (32, 45, 56))
-    winner_text = body_font.render(f"Winner: {winner_name}", True, accent)
-    subtitle = body_font.render("Choose what to do next", True, (68, 84, 98))
-
-    screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 88)))
-    screen.blit(winner_text, winner_text.get_rect(center=(panel.centerx, panel.y + 150)))
-    screen.blit(subtitle, subtitle.get_rect(center=(panel.centerx, panel.y + 190)))
-
-    screen.blit(icons["restart"], restart_rect.topleft)
-
-    pygame.draw.rect(screen, accent, home_rect, border_radius=16)
-    home_label = button_font.render("HOME", True, (255, 255, 255))
-    screen.blit(home_label, home_label.get_rect(center=home_rect.center))
+    draw_interactive_button(
+        screen,
+        restart_rect,
+        "CHƠI LẠI",
+        accent,
+        button_font,
+        border_radius=14,
+    )
+    draw_interactive_button(
+        screen,
+        home_rect,
+        "TRANG CHỦ",
+        (95, 122, 147),
+        small_button_font,
+        border_radius=12,
+    )
 
     return rects
