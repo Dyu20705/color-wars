@@ -9,8 +9,7 @@ if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.game.loop import run_game
-from src.game.audio import get_music_manager
-from src.game.settings import AppSettings
+from src.game.core import CoreSystems, LaunchConfig, SceneName
 from src.view.home_scene import run_home_menu
 
 
@@ -19,24 +18,32 @@ def main():
 
     # Khởi tạo toàn bộ subsystem của pygame trước khi render/game loop.
     pygame.init()
-    settings = AppSettings()
-    music = get_music_manager()
+    core = CoreSystems()
     try:
-        while True:
-            music.start_new_menu_session()
-            music.enter_menu()
-            launch_config = run_home_menu(settings=settings, music=music)
-            if launch_config is None:
-                break
+        while core.current_scene != SceneName.QUIT:
+            if core.current_scene == SceneName.HOME:
+                core.begin_home_session()
+                launch_config = run_home_menu(core=core)
+                if launch_config is None:
+                    core.request_quit()
+                    continue
+                core.enter_gameplay(
+                    launch=LaunchConfig(
+                        game_mode=launch_config.get("game_mode", "pvbot"),
+                        difficulty=launch_config.get("difficulty", "easy"),
+                    )
+                )
+                continue
 
             result = run_game(
-                game_mode=launch_config.get("game_mode", "pvbot"),
-                difficulty=launch_config.get("difficulty", "easy"),
-                settings=settings,
-                music=music,
+                game_mode=core.active_launch.game_mode,
+                difficulty=core.active_launch.difficulty,
+                core=core,
             )
             if result is None:
-                break
+                core.request_quit()
+            else:
+                core.enter_home()
     finally:
         # Giải phóng tài nguyên pygame ngay cả khi có exception ở menu hoặc gameplay.
         pygame.quit()

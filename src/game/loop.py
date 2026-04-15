@@ -6,6 +6,7 @@ from src.ai import get_ai_move
 from src.controller import apply_move, get_scores
 from src.engine.rules import PLAYER_BLUE, PLAYER_RED
 from src.game.settings import AppSettings, clamp01
+from src.game.core import CoreSystems
 from src.game.state import GameState
 from src import view
 from src.view.commons import draw_tutorial_overlay, make_icon_surface
@@ -16,8 +17,14 @@ FPS = 60
 EXPLOSION_ANIMATION_MS = 140
 
 
-def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None):
+def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None, core=None):
     """Run one match in pvp or pvbot mode."""
+    if core is not None:
+        if not isinstance(core, CoreSystems):
+            raise TypeError("core must be CoreSystems")
+        settings = core.settings
+        music = core.music
+
     if game_mode not in (MODE_PVP, MODE_PVBOT):
         game_mode = MODE_PVBOT
     if difficulty not in ("easy", "medium", "hard", "ez", "med"):

@@ -3,6 +3,7 @@
 import pygame
 
 from src.game.settings import AppSettings, clamp01
+from src.game.core import CoreSystems
 from src.view.choose_diff_scene import draw_choose_diff_scene
 from src.view.choose_gamemode_scene import draw_choose_gamemode_scene
 from src.view.commons import draw_tutorial_overlay, make_icon_surface
@@ -110,8 +111,14 @@ def _draw_background(screen, cache):
     screen.blit(cache["image"], (0, 0))
 
 
-def run_home_menu(settings=None, music=None):
+def run_home_menu(settings=None, music=None, core=None):
     """Run home flow and return selected configuration or None when user exits."""
+    if core is not None:
+        if not isinstance(core, CoreSystems):
+            raise TypeError("core must be CoreSystems")
+        settings = core.settings
+        music = core.music
+
     settings = settings or AppSettings()
     is_fullscreen = bool(settings.fullscreen)
     screen = drawScreen(fullscreen=is_fullscreen)
