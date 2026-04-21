@@ -41,8 +41,8 @@ class TestHomeScene(unittest.TestCase):
         self.assertEqual(difficulty_from_percent(-1), "easy")
         self.assertEqual(difficulty_from_percent(2), "hard")
 
-    def test_home_scene_buttons_have_empty_labels(self):
-        """Home scene draws play/quit buttons without text labels."""
+    def test_home_scene_buttons_use_vietnamese_labels(self):
+        """Home scene draws the expected Play/Quit labels."""
         labels = []
 
         def fake_draw_button(_screen, _rect, label, _color, _font):
@@ -55,7 +55,7 @@ class TestHomeScene(unittest.TestCase):
         }
 
         draw_home_scene(None, pygame.Rect(0, 0, 300, 200), {"button": None}, {"btn_green": (0, 0, 0), "btn_red": (0, 0, 0)}, rects)
-        self.assertEqual(labels, ["", ""])
+        self.assertEqual(labels, ["BẮT ĐẦU", "THOÁT"])
 
 
 if __name__ == "__main__":

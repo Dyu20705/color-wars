@@ -44,8 +44,8 @@ def draw_tutorial_overlay(screen, panel, fonts, colors, lines, close_label="Đó
     shade.fill((8, 16, 26, 150))
     screen.blit(shade, (0, 0))
 
-    overlay_w = min(int(panel.width * 0.9), screen.get_width() - 32)
-    overlay_h = min(int(panel.height * 0.88), screen.get_height() - 32)
+    overlay_w = max(int(screen.get_width() * 0.78), min(int(panel.width * 1.45), screen.get_width() - 32))
+    overlay_h = max(int(screen.get_height() * 0.82), min(int(panel.height * 1.2), screen.get_height() - 32))
     overlay = pygame.Rect(
         (screen.get_width() - overlay_w) // 2,
         (screen.get_height() - overlay_h) // 2,

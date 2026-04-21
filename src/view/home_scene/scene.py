@@ -7,14 +7,14 @@ def draw_home_scene(screen, panel, fonts, palette, rects):
     rects["draw_button"](
         screen,
         rects["play_btn"],
-        "",
+        "BẮT ĐẦU",
         palette["btn_green"],
         fonts["button"],
     )
     rects["draw_button"](
         screen,
         rects["quit_btn"],
-        "",
+        "THOÁT",
         palette["btn_red"],
         fonts["button"],
     )

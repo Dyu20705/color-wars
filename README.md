@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Pygame](https://img.shields.io/badge/Pygame-2.x-2E8B57)](https://www.pygame.org/)
-[![Tests](https://img.shields.io/badge/tests-22%20passed-success)](#testing)
+[![Tests](https://img.shields.io/badge/tests-25%20passed-success)](#testing)
 [![License](https://img.shields.io/badge/license-TBD-lightgrey)](#license)
 
 Color Wars is a turn-based Pygame strategy game about placing dots, triggering chain explosions, and converting enemy territory on a 5x5 board. It supports local PvP and PvE matches with Easy, Medium, and Hard AI levels.
@@ -97,9 +97,7 @@ Scene flow:
 asset/
   aud/                  background music files
   img/                  backgrounds and UI images
-  gameplay/             gameplay screenshots and optional video
-scripts/
-  benchmark_ai.py       AI balance benchmark
+  gameplay/             gameplay screenshots
 src/
   main.py               application entrypoint
   controller.py         move application and win handling
@@ -116,8 +114,6 @@ tests/
   ai/                   AI behavior tests
   game_logic/           rules and controller tests
   view/                 scene and HUD tests
-docs/
-  media/                screenshot/video guide for the README
 ```
 
 ## Audio and Scene Behavior
@@ -144,8 +140,9 @@ Recent polish rules applied across scenes:
 - Visual hierarchy by section blocks (Title -> Description -> Controls -> Action).
 - Shared interactive buttons with hover/pressed feedback.
 - Responsive text fitting for resize-safe labels and headings.
-- Home panel keeps 4 controls only (Play, Quit, Tutorial, Settings) and removes extra text blocks.
+- Home panel keeps 4 controls (Play, Quit, Tutorial, Settings), with labels on Play/Quit and icon actions on Tutorial/Settings.
 - Choose mode panel now includes the heading `Chọn chế độ chơi`.
+- Tutorial overlay uses a larger screen-relative window to avoid text clipping.
 - Tutorial text-wall reduction:
   - numbered bullet format
   - keyword highlight (`nổ dây chuyền`, `4 chấm`, `combo`, `phím tắt`)
@@ -163,25 +160,17 @@ Current model is lightweight but stronger than simple score heuristics:
   - near-explosion potential
 - smoothed probability output with bounded confidence
 
-Run AI benchmark:
-
-```bash
-python scripts/benchmark_ai.py --games 200
-```
-
 ## Media Preview
 
-The repo already uses uploaded preview assets under `asset/gameplay/`.
+The repo currently ships preview assets under `asset/gameplay/`.
 
 ### Screenshots
 
 - [Gameplay overview](asset/gameplay/gameplay.png)
-- [Home screen](asset/gameplay/home.png)
 - [End screen](asset/gameplay/win.png)
 
 ### Video
 
-- [Gameplay demo video](asset/gameplay/gameplay.mp4)
 - [YouTube demo](https://www.youtube.com/watch?v=Ku6gNe-UeJE)
 
 If you want a minimal README, keeping just the screenshots above is enough.
@@ -213,24 +202,27 @@ When validating a local demo build, verify these UX points:
 4. Fullscreen changes only when pressing `F11`.
 5. PvP HUD does not show bot difficulty.
 
-### Optional Benchmark
-
-```bash
-python scripts/benchmark_ai.py --games 200
-```
-
 ## Testing
 
-- Current status: `22 passed`
+- Current status: `25 passed`
 - Test layout:
   - `tests/ai`: AI behavior
   - `tests/game_logic`: engine/controller correctness
   - `tests/view`: scene/HUD contracts
+- Newly covered UI behaviors:
+  - home menu icon placement and button labels
+  - choose-mode heading rendering
+  - settings scene copy cleanup and apply-mark removal
+  - tutorial overlay minimum size constraints
+- Remaining gaps:
+  - no full integration tests for complete menu flow (`run_home_menu` event loop)
+  - no automated visual regression/snapshot tests for real rendered frames
+  - limited tests for audio manager runtime behavior
 
 ## Troubleshooting
 
 - Music does not play:
-  - verify `.mp3` files exist in `asset/mp3/`
+  - verify `.mp3` files exist in `asset/aud/`
   - check audio device availability and mixer initialization
 - Fullscreen toggles unexpectedly:
   - press `F11` to restore preference, then re-enter scene
