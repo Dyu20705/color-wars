@@ -24,7 +24,7 @@ MODE_PVBOT = "pvbot"
 HOME_BG_FALLBACK = (26, 22, 24)
 TITLE_COLOR = (247, 239, 224)
 SUBTITLE_COLOR = (237, 228, 208)
-PANEL_COLOR = (255, 248, 235)
+PANEL_COLOR = (255, 248, 235, 50)
 PANEL_BORDER = (232, 215, 186)
 TEXT_MAIN = (248, 240, 223)
 BTN_GREEN = (92, 162, 126)
@@ -84,7 +84,7 @@ def compute_menu_icon_rects(panel):
 def _draw_background(screen, cache):
     size = screen.get_size()
     if cache.get("source") is None:
-        image_path = get_home_asset_path("background.png")
+        image_path = get_home_asset_path("bkgr.jpeg")
         try:
             cache["source"] = load_image(image_path, alpha=False)
         except (pygame.error, FileNotFoundError, OSError):
@@ -97,11 +97,14 @@ def _draw_background(screen, cache):
         source = cache.get("source")
         if source is not None:
             src_w, src_h = source.get_size()
-            scale = max(size[0] / max(1, src_w), size[1] / max(1, src_h))
-            target_w = max(1, int(src_w * scale))
-            target_h = max(1, int(src_h * scale))
+
+            scale = min(size[0] / src_w, size[1] / src_h)
+            target_w = int(src_w * scale)
+            target_h = int(src_h * scale)
+
             fitted = pygame.transform.smoothscale(source, (target_w, target_h))
             pos = ((size[0] - target_w) // 2, (size[1] - target_h) // 2)
+
             composed.blit(fitted, pos)
 
         vignette = pygame.Surface(size, pygame.SRCALPHA)
@@ -129,6 +132,9 @@ def run_home_menu(settings=None, music=None, core=None):
         settings.set_fullscreen(bool(existing_surface.get_flags() & pygame.FULLSCREEN))
     is_fullscreen = bool(settings.fullscreen)
     screen = drawScreen(fullscreen=is_fullscreen)
+    # Tải tấm ảnh lớn chứa tất cả các nút
+    buttons_sheet = load_image(get_home_asset_path("buttons1.png"), alpha=True)
+
     clock = pygame.time.Clock()
 
     icon_size = (160, 160)
@@ -166,18 +172,33 @@ def run_home_menu(settings=None, music=None, core=None):
         btn_font = pygame.font.SysFont("segoeui", max(20, int(height * 0.033)), bold=True)
         body_font = pygame.font.SysFont("segoeui", max(16, int(height * 0.026)))
 
+        fonts = {
+        "title": title_font,
+        "main": main_font,
+        "button": btn_font,
+        "body": body_font
+    }
+
         panel = pygame.Rect(max(24, width // 12), max(26, height // 16), width - max(48, width // 6), height - max(52, height // 10))
         back_rect = pygame.Rect(panel.x + 18, panel.y + 16, 46, 46)
 
         tutorial_icon_rect, settings_icon_rect = compute_menu_icon_rects(panel)
 
         center_x = panel.centerx
-        menu_btn_w = min(340, int(panel.width * 0.56))
-        menu_btn_h = max(52, int(panel.height * 0.1))
-        menu_start_y = panel.y + int(panel.height * 0.46)
+        menu_btn_h = max(56, int(panel.height * 0.11)) # Tăng chiều cao lên một chút cho dễ nhìn
+        menu_btn_w = int(menu_btn_h * 2.8)
 
+        start_raw = buttons_sheet.subsurface(pygame.Rect(45, 45, 494, 170))  # Nút START
+        start_btn_img = pygame.transform.smoothscale(start_raw, (menu_btn_w, menu_btn_h))
+
+        # Tương tự cho nút CLOSE, Y=240 vẫn chuẩn nhưng cần nới rộng vùng cắt
+        close_raw = buttons_sheet.subsurface(pygame.Rect(45, 240, 494, 170)) # Nút CLOSE
+        close_btn_img = pygame.transform.smoothscale(close_raw, (menu_btn_w, menu_btn_h))
+        menu_start_y = panel.y + int(panel.height * 0.46)
+        
+        # Căn giữa nút dựa trên menu_btn_w mới
         play_btn = pygame.Rect(center_x - menu_btn_w // 2, menu_start_y, menu_btn_w, menu_btn_h)
-        quit_btn = pygame.Rect(center_x - menu_btn_w // 2, menu_start_y + menu_btn_h + 14, menu_btn_w, menu_btn_h)
+        quit_btn = pygame.Rect(center_x - menu_btn_w // 2, menu_start_y + menu_btn_h + 16, menu_btn_w, menu_btn_h)
 
         mode_btn_h = max(46, int(panel.height * 0.085))
         mode_btn_gap = max(10, int(panel.height * 0.015))
@@ -375,15 +396,15 @@ def run_home_menu(settings=None, music=None, core=None):
         _draw_panel(screen, panel)
 
         if state == MENU:
-            draw_home_scene(
-                screen,
-                panel,
-                {"title": title_font, "body": body_font, "button": btn_font},
-                palette,
-                shared_rects,
-            )
-            draw_settings_icon(screen, settings_icon_rect, palette)
-            screen.blit(icons["tutorial"], tutorial_icon_rect.topleft)
+            draw_home_scene(screen, panel, fonts, palette, shared_rects)
+    
+            # Scale ảnh theo kích thước nút bạn muốn
+            start_img = pygame.transform.smoothscale(start_raw, (play_btn.width, play_btn.height))
+            close_img = pygame.transform.smoothscale(close_raw, (quit_btn.width, quit_btn.height))
+            
+            # Vẽ đè lên chính giữa Rect để khớp với vị trí bấm chuột
+            screen.blit(start_img, start_img.get_rect(center=play_btn.center))
+            screen.blit(close_img, close_img.get_rect(center=quit_btn.center))
 
         elif state == CHOOSE_MODE:
             screen.blit(icons["tutorial"], tutorial_icon_rect.topleft)

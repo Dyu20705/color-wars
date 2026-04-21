@@ -26,6 +26,6 @@ def draw_home_scene(screen, panel, fonts, colors, rects):
         offset=(1, 1),
     )
 
-    draw_button = rects["draw_button"]
-    draw_button(screen, rects["play_btn"], "CHƠI", colors["btn_green"], fonts["button"])
-    draw_button(screen, rects["quit_btn"], "THOÁT", colors["btn_red"], fonts["button"])
+    # draw_button = rects["draw_button"]
+    # draw_button(screen, rects["play_btn"], "CHƠI", colors["btn_green"], fonts["button"])
+    # draw_button(screen, rects["quit_btn"], "THOÁT", colors["btn_red"], fonts["button"])
