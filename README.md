@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Pygame](https://img.shields.io/badge/Pygame-2.x-2E8B57)](https://www.pygame.org/)
-[![Tests](https://img.shields.io/badge/tests-20%20passed-success)](#testing)
+[![Tests](https://img.shields.io/badge/tests-22%20passed-success)](#testing)
 [![License](https://img.shields.io/badge/license-TBD-lightgrey)](#license)
 
 Color Wars is a turn-based Pygame strategy game about placing dots, triggering chain explosions, and converting enemy territory on a 5x5 board. It supports local PvP and PvE matches with Easy, Medium, and Hard AI levels.
@@ -144,6 +144,8 @@ Recent polish rules applied across scenes:
 - Visual hierarchy by section blocks (Title -> Description -> Controls -> Action).
 - Shared interactive buttons with hover/pressed feedback.
 - Responsive text fitting for resize-safe labels and headings.
+- Home panel keeps 4 controls only (Play, Quit, Tutorial, Settings) and removes extra text blocks.
+- Choose mode panel now includes the heading `Chọn chế độ chơi`.
 - Tutorial text-wall reduction:
   - numbered bullet format
   - keyword highlight (`nổ dây chuyền`, `4 chấm`, `combo`, `phím tắt`)
@@ -219,7 +221,7 @@ python scripts/benchmark_ai.py --games 200
 
 ## Testing
 
-- Current status: `20 passed`
+- Current status: `22 passed`
 - Test layout:
   - `tests/ai`: AI behavior
   - `tests/game_logic`: engine/controller correctness

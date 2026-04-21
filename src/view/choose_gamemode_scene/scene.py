@@ -2,11 +2,23 @@
 
 import pygame
 
+from src.view.commons import blit_fitted_text
+
 
 def draw_choose_gamemode_scene(screen, panel, fonts, colors, rects, icons):
     """Draw mode selection scene."""
     screen.blit(icons["back"], rects["back_rect"].topleft)
     screen.blit(icons["settings"], rects["settings_icon_rect"].topleft)
+
+    blit_fitted_text(
+        screen,
+        fonts["main"],
+        "Chọn chế độ chơi",
+        colors["title"],
+        (panel.centerx, panel.y + int(panel.height * 0.24)),
+        panel.width - 42,
+        46,
+    )
 
     def draw_mode_card(rect, icon_primary, icon_secondary, color):
         pygame.draw.rect(screen, (255, 248, 235), rect, border_radius=16)

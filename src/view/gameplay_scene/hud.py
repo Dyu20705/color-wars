@@ -120,7 +120,6 @@ def draw_win_rate_panel(screen, state, layout, game_mode=None, difficulty=None):
     panel_w = width - panel_x - side_margin
     if panel_w < 90:
         return
-    panel_w = max(110, panel_w)
     panel_h = max(210, int(height * 0.56))
     panel = pygame.Rect(panel_x, start_y, panel_w, panel_h)
     _draw_panel(screen, panel)
@@ -163,7 +162,6 @@ def draw_move_history_panel(screen, state, layout):
     panel_w = board_x - side_margin * 2
     if panel_w < 100:
         return
-    panel_w = max(120, panel_w)
     panel_h = min(190, max(120, int(height * 0.26)))
     panel_x = side_margin
     panel_y = min(height - panel_h - side_margin, board_y + board_size - panel_h)
@@ -182,11 +180,15 @@ def draw_move_history_panel(screen, state, layout):
         return
 
     start_y = panel.y + 42
+    row_gap = max(18, item_font.get_height() + 4)
     for idx, (player_name, coord) in enumerate(entries):
         color = BLUE_COLOR if player_name == "B" else RED_COLOR
         line = item_font.render(f"{player_name}  {coord}", True, HUD_TEXT_COLOR)
-        screen.blit(line, (panel.x + 14, start_y + idx * 22))
-        pygame.draw.circle(screen, color, (panel.x + 10, start_y + idx * 22 + line.get_height() // 2), 4)
+        line_y = start_y + idx * row_gap
+        if line_y + line.get_height() > panel.bottom - 8:
+            break
+        screen.blit(line, (panel.x + 14, line_y))
+        pygame.draw.circle(screen, color, (panel.x + 10, line_y + line.get_height() // 2), 4)
 
 
 def drawHud(screen, state, current_player, blue_score, red_score, winner, game_mode=None, difficulty=None, layout=None):
@@ -209,6 +211,7 @@ def drawHud(screen, state, current_player, blue_score, red_score, winner, game_m
     if left_panel_width > 0:
         left_x = side_margin
         left_y = start_y + 12
+        line_step = max(20, int(layout["height"] * 0.036))
         for idx, line in enumerate(status_lines):
             line_surface = _render_fitted_line(
                 line,
@@ -217,7 +220,7 @@ def drawHud(screen, state, current_player, blue_score, red_score, winner, game_m
                 min_size=12,
                 max_width=left_panel_width,
             )
-            screen.blit(line_surface, (left_x, left_y + idx * 28))
+            screen.blit(line_surface, (left_x, left_y + idx * line_step))
 
     draw_win_rate_panel(screen, state, layout, game_mode, difficulty)
     draw_move_history_panel(screen, state, layout)
