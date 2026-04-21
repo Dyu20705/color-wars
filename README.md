@@ -2,191 +2,176 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Pygame](https://img.shields.io/badge/Pygame-2.x-2E8B57)](https://www.pygame.org/)
-[![Tests](https://img.shields.io/badge/tests-20%20passed-success)](#testing)
-[![License](https://img.shields.io/badge/license-TBD-lightgrey)](#license)
+[![Tests](https://img.shields.io/badge/tests-54%20passed-success)](#testing)
+[![License](https://img.shields.io/badge/license-MIT-green)](#license)
 
-Color Wars is a turn-based Pygame strategy game about placing dots, triggering chain explosions, and converting enemy territory on a 5x5 board. It supports local PvP and PvE matches with Easy, Medium, and Hard AI levels.
+Color Wars là game chiến thuật theo lượt xây dựng bằng Pygame, nơi người chơi đặt chấm, kích nổ dây chuyền và chuyển quyền kiểm soát ô trên bàn cờ 5x5. Trò chơi hỗ trợ cả chế độ PvP (2 người) và PvE (đấu bot) với 3 mức độ khó.
 
-## Table of Contents
+## Mục lục
 
-- [Why This Project](#why-this-project)
-- [Quick Start](#quick-start)
-- [Controls](#controls)
-- [Gameplay Rules](#gameplay-rules)
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Audio and Scene Behavior](#audio-and-scene-behavior)
-- [Win Chance Model](#win-chance-model)
-- [Media Preview](#media-preview)
-- [Development Workflow](#development-workflow)
+- [Tổng quan dự án](#tổng-quan-dự-án)
+- [Khởi động nhanh](#khởi-động-nhanh)
+- [Điều khiển](#điều-khiển)
+- [Luật chơi cốt lõi](#luật-chơi-cốt-lõi)
+- [Kiến trúc](#kiến-trúc)
+- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
+- [Hành vi âm thanh và scene](#hành-vi-âm-thanh-và-scene)
+- [Chuẩn hiển thị UI](#chuẩn-hiển-thị-ui)
+- [Media preview](#media-preview)
+- [Quy trình phát triển](#quy-trình-phát-triển)
 - [Testing](#testing)
-- [Troubleshooting](#troubleshooting)
+- [Xử lý sự cố](#xử-lý-sự-cố)
 - [Roadmap](#roadmap)
-- [Contributing](#contributing)
+- [Đóng góp](#đóng-góp)
 - [License](#license)
 
-## Why This Project
+## Tổng quan dự án
 
-- Demonstrate a compact turn-based strategy core with deterministic rules.
-- Keep architecture clean as features grow (audio/settings/scene now have a shared runtime core).
-- Provide both player-ready flow and testable subsystems for long-term maintainability.
+Mục tiêu của dự án:
 
-## Quick Start
+- Giữ logic game tách biệt rõ giữa engine, controller, runtime và view.
+- Dễ mở rộng tính năng scene, audio, settings mà không làm rối game loop.
+- Dễ test bằng unit test cho AI, game logic và render contract.
 
-### Requirements
+## Khởi động nhanh
+
+### Yêu cầu
 
 - Python 3.10+
 - Pygame 2.x
 
-### Install
+### Cài đặt
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Run
+### Chạy game
 
 ```bash
 python -m src.main
 ```
 
-## Controls
+## Điều khiển
 
-- Left Click: place or reinforce a valid cell
-- M: toggle PvP / PvE mode
-- R: restart the current match
-- H: toggle tutorial overlay
-- F11: toggle fullscreen
-- Esc: go back or close overlays
+- Chuột trái: đặt/tăng quân ở ô hợp lệ
+- M: đổi chế độ PvP/PvE trong màn gameplay
+- R: chơi lại ván hiện tại
+- H: bật/tắt lớp hướng dẫn
+- F11: bật/tắt toàn màn hình
+- Esc: quay lại màn trước hoặc đóng overlay
 
-## Gameplay Rules
+## Luật chơi cốt lõi
 
-- Empty cell capture adds 3 dots
-- Reinforcing your own cell adds 1 dot
-- A cell explodes at 4 dots
-- Chain explosions convert adjacent cells to the exploding owner
+- Chiếm ô trống: +3 chấm
+- Tăng quân vào ô của mình: +1 chấm
+- Ô đạt 4 chấm sẽ nổ
+- Nổ dây chuyền lan sang ô kề và đổi chủ theo người vừa kích nổ
 
-## Architecture
+## Kiến trúc
 
-Core architecture follows separation of concerns:
+Phân tách chính:
 
-- Engine: pure game rules and chain explosion resolution
-- Controller: state mutation and win detection
-- View: rendering and UI only
-- Runtime Core: scene flow, app settings, and music orchestration
+- Engine: luật hợp lệ nước đi, tăng chấm, nổ dây chuyền
+- Controller: áp dụng nước đi, đổi lượt, xác định thắng/thua
+- Game runtime: state, loop, core systems, audio manager, app settings
+- AI: policy theo mức easy/medium/hard
+- View: bố cục, scene, HUD, overlay và các thành phần vẽ
 
-Runtime components:
+Runtime core hiện tại:
 
-- `CoreSystems`: app-level orchestrator for scene flow and shared systems
-- `AppSettings`: global settings source of truth
-- `MusicManager`: context-aware music management for menu/gameplay
-- shared UI helpers (`view/commons/ui_components.py`) for:
-  - consistent hover/pressed button behavior across scenes
-  - fitted text rendering for responsive screen sizes
+- CoreSystems: điều phối scene mức ứng dụng (home/gameplay/quit)
+- AppSettings: lưu trạng thái âm thanh, âm lượng, fullscreen, ngôn ngữ
+- MusicManager: quản lý nhạc nền dùng chung giữa menu và gameplay
 
-Scene flow:
-
-1. HOME starts a new menu session and randomizes theme/game tracks.
-2. User picks mode and difficulty.
-3. Core enters GAMEPLAY with LaunchConfig.
-4. Exiting gameplay returns to HOME and restores theme track.
-
-## Project Structure
+## Cấu trúc thư mục
 
 ```text
 asset/
-  aud/                  background music files
-  img/                  backgrounds and UI images
-  gameplay/             gameplay screenshots and optional video
-scripts/
-  benchmark_ai.py       AI balance benchmark
+  aud/                     nhạc nền (.mp3)
+  gameplay/                ảnh chụp màn hình + video demo mp4
+  img/                     ảnh nền, icon, UI assets
 src/
-  main.py               application entrypoint
-  controller.py         move application and win handling
-  engine/               pure rules and explosion logic
+  main.py                  entrypoint ứng dụng
+  controller.py            apply move, score, xác định thắng
+  ai/
+    ai.py                  router chọn bot theo difficulty
+    ez_AI.py               easy AI (ưu tiên nước đi yếu)
+    med_AI.py              medium AI (lookahead nông + nhiễu)
+    hard_AI.py             hard AI (alpha-beta)
+  engine/
+    rules.py               luật nước đi và hằng số người chơi
+    explosion.py           xử lý chuỗi nổ
   game/
-    core.py             core systems (scene, settings, audio wiring)
-    settings.py         shared app settings
-    audio.py            music manager and audio controls
-    loop.py             gameplay runtime loop
-    analysis.py         win chance analysis
-  ai/                   difficulty-specific AI policies
-  view/                 all Pygame rendering and UI
+    core.py                scene state machine + orchestration
+    settings.py            AppSettings + clamp
+    audio.py               MusicManager
+    loop.py                vòng lặp gameplay chính
+    state.py               GameState dataclass
+    analysis.py            ước lượng tỷ lệ thắng cho HUD
+  view/
+    constants.py           màu sắc và hằng số UI
+    layout.py              responsive layout + mapping chuột->ô
+    window.py              tạo màn hình và fullscreen
+    base/                  lớp scene base
+    commons/               component dùng chung (button, overlay, icon)
+    home_scene/            home flow + render
+    choose_gamemode_scene/ scene chọn chế độ
+    choose_diff_scene/     scene chọn độ khó
+    gameplay_scene/        board, hud, effects, compose scene
+    setting_scene/         scene cài đặt
+    tutorial_scene/        scene/hỗ trợ hướng dẫn
+    win_scene/             overlay chiến thắng
 tests/
-  ai/                   AI behavior tests
-  game_logic/           rules and controller tests
-  view/                 scene and HUD tests
-docs/
-  media/                screenshot/video guide for the README
+  ai/                      test router + hard/medium/easy AI
+  game_logic/              test controller/rules/explosion
+  game/                    test game runtime modules
+  view/                    test scene contract/layout/hud/overlay
 ```
 
-## Audio and Scene Behavior
+## Hành vi âm thanh và scene
 
-- Music session behavior:
-  - menu picks one random theme track
-  - gameplay uses the remaining tracks and alternates them
-  - returning to menu restores theme immediately
-- Music toggle semantics: pause/resume (no forced stop/restart)
-- Fullscreen behavior: controlled by user preference, no forced scene auto-fullscreen
+Hành vi hiện tại theo code:
 
-## Asset Layout
+- Khi vào home session, hệ thống chọn 1 bài theme ngẫu nhiên trong asset/aud.
+- Gameplay dùng cùng track đang chạy, không ép đổi bài trong lúc chơi.
+- Bật/tắt âm thanh dùng pause/unpause, không stop/restart cưỡng bức.
+- Âm lượng được clamp về [0.0, 1.0] trước khi áp dụng.
+- Thoát gameplay về home sẽ đưa context nhạc về menu.
+- Fullscreen có thể toggle bằng F11 và cập nhật vào AppSettings.
 
-Current asset locations:
+## Chuẩn hiển thị UI
 
-- `asset/img/`: background, icon, and UI images
-- `asset/aud/`: music tracks
-- `asset/gameplay/`: screenshot assets and optional gameplay video
+Các chuẩn UI đang áp dụng:
 
-## UI Readability Standards
+- Bố cục responsive theo kích thước cửa sổ (layout động theo screen size).
+- Nút bấm dùng shared interaction (hover/pressed) qua component chung.
+- Home scene tối giản 4 điều khiển chính: Bắt đầu, Thoát, Tutorial, Settings.
+- Nhãn tiếng Việt nhất quán ở các scene chính (menu, settings, tutorial, HUD).
+- Tutorial overlay có kích thước lớn theo tỉ lệ màn hình để giảm tràn chữ.
+- HUD hiển thị trạng thái chế độ, điều khiển, lịch sử nước đi và tỷ lệ thắng.
 
-Recent polish rules applied across scenes:
+## Media preview
 
-- Visual hierarchy by section blocks (Title -> Description -> Controls -> Action).
-- Shared interactive buttons with hover/pressed feedback.
-- Responsive text fitting for resize-safe labels and headings.
-- Tutorial text-wall reduction:
-  - numbered bullet format
-  - keyword highlight (`nổ dây chuyền`, `4 chấm`, `combo`, `phím tắt`)
-  - narrower line width for easier scanning
+Tài nguyên demo nằm trong asset/gameplay.
 
-## Win Chance Model
+### Ảnh chụp
 
-Current model is lightweight but stronger than simple score heuristics:
+- [Màn hình chính](asset/gameplay/home.png)
+- [Chọn chế độ](asset/gameplay/chonMode.png)
+- [Chọn độ khó](asset/gameplay/chonDiff.png)
+- [Gameplay](asset/gameplay/gameplay.png)
+- [Cài đặt](asset/gameplay/setting.png)
+- [Tutorial](asset/gameplay/tutorial.png)
+- [Màn hình thắng](asset/gameplay/win.png)
 
-- phase-aware weighting (early vs late game)
-- normalized features:
-  - territory control
-  - dot pressure
-  - mobility (valid moves)
-  - near-explosion potential
-- smoothed probability output with bounded confidence
+### Video demo
 
-Run AI benchmark:
+- [Gameplay video (.mp4)](asset/gameplay/gameplay_video.mp4)
 
-```bash
-python scripts/benchmark_ai.py --games 200
-```
+## Quy trình phát triển
 
-## Media Preview
-
-The repo already uses uploaded preview assets under `asset/gameplay/`.
-
-### Screenshots
-
-- [Gameplay overview](asset/gameplay/gameplay.png)
-- [Home screen](asset/gameplay/home.png)
-- [End screen](asset/gameplay/win.png)
-
-### Video
-
-- [Gameplay demo video](asset/gameplay/gameplay.mp4)
-- [YouTube demo](https://www.youtube.com/watch?v=Ku6gNe-UeJE)
-
-If you want a minimal README, keeping just the screenshots above is enough.
-
-## Development Workflow
-
-### Local Setup (Windows PowerShell)
+### Thiết lập local (Windows PowerShell)
 
 ```powershell
 python -m venv .venv
@@ -194,7 +179,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### Run and Test
+### Chạy game và test
 
 ```bash
 python -m src.main
@@ -203,63 +188,67 @@ pytest -q
 
 ### Local Demo Completion Check
 
-When validating a local demo build, verify these UX points:
+Checklist kiểm tra nhanh bản demo local:
 
-1. Hover and pressed states appear on all primary buttons (Home, Settings, Tutorial close, Win scene).
-2. Text scales to stay inside button/panel bounds when resizing window.
-3. Settings panel layout remains readable at 1280x720.
-4. Fullscreen changes only when pressing `F11`.
-5. PvP HUD does not show bot difficulty.
-
-### Optional Benchmark
-
-```bash
-python scripts/benchmark_ai.py --games 200
-```
+1. Tất cả nút chính có trạng thái hover/pressed rõ ràng.
+2. Chữ trong panel và button không bị tràn khi đổi kích thước cửa sổ.
+3. Tutorial overlay hiển thị đầy đủ nội dung và nút Đóng hoạt động.
+4. Settings cho phép bật/tắt âm thanh và kéo thanh âm lượng, bấm Áp dụng có hiệu lực.
+5. F11 toggle fullscreen ổn định ở cả home và gameplay.
+6. Esc quay lại đúng ngữ cảnh (đóng overlay trước, sau đó về scene trước).
+7. PvP không hiển thị thông tin độ khó bot trên HUD.
+8. Kết thúc trận hiển thị đúng overlay thắng với nút Chơi lại và Trang chủ.
 
 ## Testing
 
-- Current status: `20 passed`
-- Test layout:
-  - `tests/ai`: AI behavior
-  - `tests/game_logic`: engine/controller correctness
-  - `tests/view`: scene/HUD contracts
+- Trạng thái hiện tại: 54 passed
+- Cấu trúc test:
+  - tests/ai: router + easy/medium/hard bot
+  - tests/game_logic: engine/controller
+  - tests/game: core settings/audio/analysis/state/loop guard
+  - tests/view: scene contract, layout/window, gameplay HUD/effects
+- Khoảng trống còn lại:
+  - chưa có integration test full event loop cho run_home_menu
+  - chưa có visual snapshot/regression test khung hình render thật
+  - chưa có benchmark hiệu năng cho AI theo nhiều trạng thái bàn cờ lớn
 
-## Troubleshooting
+## Xử lý sự cố
 
-- Music does not play:
-  - verify `.mp3` files exist in `asset/mp3/`
-  - check audio device availability and mixer initialization
-- Fullscreen toggles unexpectedly:
-  - press `F11` to restore preference, then re-enter scene
-- Text or panels overlap in small window:
-  - increase window size; side HUD panels auto-reduce on narrow layouts
-- Tests fail locally but pass before:
-  - run from repo root and ensure dependencies from `requirements.txt` are installed
+- Không có nhạc:
+  - kiểm tra file .mp3 trong asset/aud
+  - kiểm tra mixer/audio device khả dụng trên máy
+- Video demo không mở từ README:
+  - mở trực tiếp file asset/gameplay/gameplay_video.mp4 bằng player cục bộ
+- Màn hình hiển thị sai tỉ lệ:
+  - dùng F11 để đổi trạng thái fullscreen
+  - resize lại cửa sổ để layout tính toán lại
+- Test fail cục bộ:
+  - chạy lệnh tại thư mục gốc repo
+  - đảm bảo môi trường đã cài requirements.txt
 
 ## Roadmap
 
-1. Centralize all UI text into a localization table (vi/en).
-2. Introduce typed runtime event bus for scene actions.
-3. Add UI snapshot tests for responsive windowed layouts.
-4. Improve AI explanation overlays for player learning.
+1. Chuẩn hóa bảng text đa ngôn ngữ (vi/en) cho toàn bộ scene.
+2. Bổ sung integration test cho luồng home -> chọn mode -> gameplay.
+3. Bổ sung snapshot test cho một số khung hình UI quan trọng.
+4. Cải thiện giải thích quyết định của AI cho người chơi.
 
-## Contributing
+## Đóng góp
 
-Contributions are welcome.
+Đóng góp PR được chào đón.
 
-- Keep architecture boundaries intact (engine/controller/view/runtime core).
-- Add or update tests for behavioral changes.
-- Prefer small, focused pull requests with clear scope.
+Nguyên tắc chính:
 
-Suggested PR checklist:
+- Giữ ranh giới kiến trúc engine/controller/game/view rõ ràng.
+- Thay đổi hành vi cần đi kèm cập nhật test.
+- Ưu tiên PR nhỏ, rõ phạm vi, dễ review.
 
-- [ ] tests pass locally (`pytest -q`)
-- [ ] no architecture boundary violations
-- [ ] README/docs updated if behavior changes
+Checklist gợi ý trước khi mở PR:
+
+- [ ] pytest -q pass tại máy local
+- [ ] không phá vỡ ranh giới kiến trúc
+- [ ] cập nhật tài liệu nếu thay đổi hành vi
 
 ## License
 
-License is currently `TBD`.
-
-If you plan to open-source publicly, add a `LICENSE` file (MIT is common for game prototypes) and update this section.
+Dự án đang dùng giấy phép MIT. Xem chi tiết tại file [LICENSE](LICENSE).

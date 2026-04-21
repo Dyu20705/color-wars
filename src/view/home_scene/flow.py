@@ -69,26 +69,35 @@ def _draw_button(screen, rect, label, color, font):
 
 def _draw_panel(screen, rect):
     panel_surface = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
-    pygame.draw.rect(panel_surface, (255, 246, 230, 24), panel_surface.get_rect(), border_radius=24)
-    pygame.draw.rect(panel_surface, (246, 224, 190, 110), panel_surface.get_rect(), 2, border_radius=24)
+    pygame.draw.rect(panel_surface, (18, 28, 44, 136), panel_surface.get_rect(), border_radius=24)
+    pygame.draw.rect(panel_surface, (250, 236, 210, 125), panel_surface.get_rect(), 2, border_radius=24)
+    soft_glow = pygame.Surface((rect.width, int(rect.height * 0.34)), pygame.SRCALPHA)
+    soft_glow.fill((255, 252, 242, 24))
+    panel_surface.blit(soft_glow, (0, 0))
     screen.blit(panel_surface, rect.topleft)
 
 
 def compute_menu_icon_rects(panel):
-    """Return tutorial and settings icon rects for the home scene."""
-    settings_icon_rect = pygame.Rect(panel.right - 58, panel.y + 16, 40, 40)
-    tutorial_icon_rect = pygame.Rect(settings_icon_rect.x - 48, panel.y + 16, 40, 40)
+    """Return tutorial and settings icon rects aligned inside the panel header."""
+    icon_size = 40
+    icon_gap = 8
+    top_pad = 16
+    right_pad = 18
+    settings_icon_rect = pygame.Rect(panel.right - right_pad - icon_size, panel.y + top_pad, icon_size, icon_size)
+    tutorial_icon_rect = pygame.Rect(settings_icon_rect.x - icon_gap - icon_size, panel.y + top_pad, icon_size, icon_size)
     return tutorial_icon_rect, settings_icon_rect
 
 
 def _draw_background(screen, cache):
     size = screen.get_size()
     if cache.get("source") is None:
-        image_path = get_home_asset_path("bkgr.jpeg")
-        try:
-            cache["source"] = load_image(image_path, alpha=False)
-        except (pygame.error, FileNotFoundError, OSError):
-            cache["source"] = None
+        for image_name in ("background.png", "bkgr.jpeg"):
+            image_path = get_home_asset_path(image_name)
+            try:
+                cache["source"] = load_image(image_path, alpha=False)
+                break
+            except (pygame.error, FileNotFoundError, OSError):
+                cache["source"] = None
 
     if cache.get("size") != size:
         composed = pygame.Surface(size)
@@ -130,10 +139,9 @@ def run_home_menu(settings=None, music=None, core=None):
     existing_surface = pygame.display.get_surface()
     if existing_surface is not None:
         settings.set_fullscreen(bool(existing_surface.get_flags() & pygame.FULLSCREEN))
-    is_fullscreen = bool(settings.fullscreen)
+    is_fullscreen = True
+    settings.set_fullscreen(is_fullscreen)
     screen = drawScreen(fullscreen=is_fullscreen)
-    # Tải tấm ảnh lớn chứa tất cả các nút
-    buttons_sheet = load_image(get_home_asset_path("buttons1.png"), alpha=True)
 
     clock = pygame.time.Clock()
 
@@ -167,38 +175,41 @@ def run_home_menu(settings=None, music=None, core=None):
 
     while True:
         width, height = screen.get_size()
-        title_font = pygame.font.SysFont("segoeui", max(34, int(height * 0.075)), bold=True)
-        main_font = pygame.font.SysFont("segoeui", max(24, int(height * 0.05)), bold=True)
-        btn_font = pygame.font.SysFont("segoeui", max(20, int(height * 0.033)), bold=True)
-        body_font = pygame.font.SysFont("segoeui", max(16, int(height * 0.026)))
+        base = min(width, height)
+        title_font = pygame.font.SysFont("segoeui", max(30, int(base * 0.078)), bold=True)
+        main_font = pygame.font.SysFont("segoeui", max(22, int(base * 0.052)), bold=True)
+        btn_font = pygame.font.SysFont("segoeui", max(18, int(base * 0.034)), bold=True)
+        body_font = pygame.font.SysFont("segoeui", max(15, int(base * 0.026)))
 
         fonts = {
-        "title": title_font,
-        "main": main_font,
-        "button": btn_font,
-        "body": body_font
-    }
+            "title": title_font,
+            "main": main_font,
+            "button": btn_font,
+            "body": body_font,
+        }
 
-        panel = pygame.Rect(max(24, width // 12), max(26, height // 16), width - max(48, width // 6), height - max(52, height // 10))
+        panel_x = max(22, int(width * 0.05))
+        panel_y = max(22, int(height * 0.05))
+        panel_h = max(340, height - panel_y * 2)
+        panel_ratio = min(0.48, width * 0.5 / 1920.0) if width >= 1280 else 0.52
+        panel_w = max(320, min(int(width * panel_ratio), width - panel_x * 2 - 160))
+        panel = pygame.Rect(panel_x, panel_y, panel_w, panel_h)
         back_rect = pygame.Rect(panel.x + 18, panel.y + 16, 46, 46)
 
         tutorial_icon_rect, settings_icon_rect = compute_menu_icon_rects(panel)
 
         center_x = panel.centerx
-        menu_btn_h = max(56, int(panel.height * 0.11)) # Tăng chiều cao lên một chút cho dễ nhìn
-        menu_btn_w = int(menu_btn_h * 2.8)
+        menu_btn_h = max(60, int(panel.height * 0.13))
+        menu_btn_w = min(int(panel.width * 0.76), max(240, int(width * 0.30)))
+        menu_start_y = panel.y + int(panel.height * 0.42)
 
-        start_raw = buttons_sheet.subsurface(pygame.Rect(45, 45, 494, 170))  # Nút START
-        start_btn_img = pygame.transform.smoothscale(start_raw, (menu_btn_w, menu_btn_h))
-
-        # Tương tự cho nút CLOSE, Y=240 vẫn chuẩn nhưng cần nới rộng vùng cắt
-        close_raw = buttons_sheet.subsurface(pygame.Rect(45, 240, 494, 170)) # Nút CLOSE
-        close_btn_img = pygame.transform.smoothscale(close_raw, (menu_btn_w, menu_btn_h))
-        menu_start_y = panel.y + int(panel.height * 0.46)
-        
-        # Căn giữa nút dựa trên menu_btn_w mới
         play_btn = pygame.Rect(center_x - menu_btn_w // 2, menu_start_y, menu_btn_w, menu_btn_h)
-        quit_btn = pygame.Rect(center_x - menu_btn_w // 2, menu_start_y + menu_btn_h + 16, menu_btn_w, menu_btn_h)
+        quit_btn = pygame.Rect(
+            center_x - menu_btn_w // 2,
+            menu_start_y + menu_btn_h + max(16, int(panel.height * 0.03)),
+            menu_btn_w,
+            menu_btn_h,
+        )
 
         mode_btn_h = max(46, int(panel.height * 0.085))
         mode_btn_gap = max(10, int(panel.height * 0.015))
@@ -207,13 +218,24 @@ def run_home_menu(settings=None, music=None, core=None):
 
         slider_rect = pygame.Rect(center_x - min(180, panel.width // 3), panel.y + int(panel.height * 0.58), min(360, panel.width * 2 // 3), 22)
         knob_x = int(slider_rect.x + slider_rect.width * slider_percent)
-        play_match_btn = pygame.Rect(center_x - menu_btn_w // 2, panel.bottom - menu_btn_h - 26, menu_btn_w, menu_btn_h)
+        play_match_btn = pygame.Rect(
+            center_x - menu_btn_w // 2,
+            panel.bottom - menu_btn_h - max(20, int(panel.height * 0.04)),
+            menu_btn_w,
+            menu_btn_h,
+        )
 
         settings_w = min(560, width - 36)
         settings_h = min(360, height - 36)
         settings_panel = pygame.Rect((width - settings_w) // 2, (height - settings_h) // 2, settings_w, settings_h)
         settings_back_rect = pygame.Rect(settings_panel.x + 16, settings_panel.y + 16, 42, 42)
-        settings_volume_slider = pygame.Rect(settings_panel.centerx - 170, settings_panel.y + int(settings_panel.height * 0.50), 300, 16)
+        settings_slider_w = min(300, settings_panel.width - 190)
+        settings_volume_slider = pygame.Rect(
+            settings_panel.centerx - settings_slider_w // 2,
+            settings_panel.y + int(settings_panel.height * 0.50),
+            settings_slider_w,
+            16,
+        )
         settings_sound_checkbox = pygame.Rect(settings_volume_slider.right + 16, settings_volume_slider.centery - 12, 24, 24)
         settings_apply_btn = pygame.Rect(settings_panel.centerx - 90, settings_panel.bottom - int(settings_panel.height * 0.17), 180, 40)
         settings_volume_knob_x = int(settings_volume_slider.x + settings_volume_slider.width * pending_sound_volume)
@@ -250,6 +272,8 @@ def run_home_menu(settings=None, music=None, core=None):
             "play_match_btn": play_match_btn,
             "settings_icon_rect": settings_icon_rect,
             "tutorial_icon_rect": tutorial_icon_rect,
+            "settings_icon": icons["settings"],
+            "tutorial_icon": icons["tutorial"],
             "sound_checkbox": settings_sound_checkbox,
             "volume_slider": settings_volume_slider,
             "volume_knob_x": settings_volume_knob_x,
@@ -260,7 +284,7 @@ def run_home_menu(settings=None, music=None, core=None):
                 return None
 
             if event.type == pygame.VIDEORESIZE and not is_fullscreen:
-                screen = drawScreen(fullscreen=False, size=event.size)
+                pass
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_F11:
@@ -396,15 +420,9 @@ def run_home_menu(settings=None, music=None, core=None):
         _draw_panel(screen, panel)
 
         if state == MENU:
+            screen.blit(icons["tutorial"], tutorial_icon_rect.topleft)
+            screen.blit(icons["settings"], settings_icon_rect.topleft)
             draw_home_scene(screen, panel, fonts, palette, shared_rects)
-    
-            # Scale ảnh theo kích thước nút bạn muốn
-            start_img = pygame.transform.smoothscale(start_raw, (play_btn.width, play_btn.height))
-            close_img = pygame.transform.smoothscale(close_raw, (quit_btn.width, quit_btn.height))
-            
-            # Vẽ đè lên chính giữa Rect để khớp với vị trí bấm chuột
-            screen.blit(start_img, start_img.get_rect(center=play_btn.center))
-            screen.blit(close_img, close_img.get_rect(center=quit_btn.center))
 
         elif state == CHOOSE_MODE:
             screen.blit(icons["tutorial"], tutorial_icon_rect.topleft)

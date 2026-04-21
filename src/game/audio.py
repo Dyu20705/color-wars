@@ -15,16 +15,13 @@ def _resolve_music_paths():
 
 
 class MusicManager:
-    """Manage menu theme and gameplay alternation without overlapping tracks."""
+    """Manage one background track that loops across all scenes."""
 
     def __init__(self):
         self._mixer_ready = False
         self._tracks = []
         self._theme_track = None
-        self._game_tracks = []
-        self._next_game_index = 0
         self._active_track = None
-        self._active_context = None
         self._enabled = True
         self._volume = 0.75
 
@@ -48,20 +45,21 @@ class MusicManager:
         return bool(self._tracks)
 
     def start_new_menu_session(self):
-        """Re-randomize theme and gameplay pool for a new session."""
+        """Pick one track for the whole runtime session."""
         if not self._ensure_ready():
+            return
+
+        if self._theme_track is not None:
             return
 
         shuffled = self._tracks[:]
         random.shuffle(shuffled)
         self._theme_track = shuffled[0]
-        self._game_tracks = shuffled[1:] if len(shuffled) > 1 else [shuffled[0]]
-        self._next_game_index = 0
 
-    def _load_and_play(self, track, context):
+    def _load_and_play(self, track):
         if track is None or not self._ensure_ready():
             return
-        if self._active_track == track and self._active_context == context:
+        if self._active_track == track:
             return
         try:
             pygame.mixer.music.load(str(track))
@@ -70,26 +68,23 @@ class MusicManager:
             if not self._enabled:
                 pygame.mixer.music.pause()
             self._active_track = track
-            self._active_context = context
         except (pygame.error, FileNotFoundError, OSError):
             pass
 
     def enter_menu(self):
-        """Ensure menu theme is active; keeps playback if already correct."""
+        """Ensure the shared looping track is loaded and playing."""
         if self._theme_track is None:
             self.start_new_menu_session()
-        self._load_and_play(self._theme_track, "menu")
+        self._load_and_play(self._theme_track)
         self.apply_audio_preferences(self._enabled, self._volume)
 
     def enter_gameplay(self):
-        """Switch to the next gameplay track and alternate on next entry."""
-        if not self._game_tracks:
+        """Keep the same looping track playing (no reload)."""
+        if self._theme_track is None:
             self.start_new_menu_session()
-        if not self._game_tracks:
+        if self._active_track == self._theme_track and pygame.mixer.music.get_busy():
             return
-        track = self._game_tracks[self._next_game_index % len(self._game_tracks)]
-        self._next_game_index = (self._next_game_index + 1) % len(self._game_tracks)
-        self._load_and_play(track, "game")
+        self._load_and_play(self._theme_track)
         self.apply_audio_preferences(self._enabled, self._volume)
 
     def apply_audio_preferences(self, enabled, volume):

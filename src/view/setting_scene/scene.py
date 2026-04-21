@@ -26,8 +26,6 @@ def draw_setting_scene(screen, panel, fonts, colors, back_rect, back_icon, contr
         screen.blit(back_icon, back_rect.topleft)
 
     title_y = panel.y + int(panel.height * 0.12)
-    subtitle_y = panel.y + int(panel.height * 0.20)
-    hint_y = panel.y + int(panel.height * 0.27)
     section_y = panel.y + int(panel.height * 0.42)
 
     # Section backdrop to visually group sound controls.
@@ -42,24 +40,6 @@ def draw_setting_scene(screen, panel, fonts, colors, back_rect, back_icon, contr
         (panel.centerx, title_y),
         panel.width - 42,
         52,
-    )
-    blit_fitted_text(
-        screen,
-        fonts["body"],
-        "Âm thanh và tùy chọn trận đấu",
-        (198, 216, 232),
-        (panel.centerx, subtitle_y),
-        panel.width - 42,
-        36,
-    )
-    blit_fitted_text(
-        screen,
-        fonts["body"],
-        "Nhấn Áp dụng để lưu thay đổi.",
-        (220, 234, 246),
-        (panel.centerx, hint_y),
-        panel.width - 42,
-        34,
     )
 
     checkbox_rect = controls["sound_checkbox"]
@@ -133,19 +113,4 @@ def draw_setting_scene(screen, panel, fonts, colors, back_rect, back_icon, contr
         (90, 170, 255),
         fonts["body"],
         border_radius=14,
-    )
-
-    # Small confirmation mark near the apply area.
-    mark_center = (apply_btn.right + 18, apply_btn.centery)
-    pygame.draw.circle(screen, (90, 170, 255), mark_center, 9)
-    pygame.draw.lines(
-        screen,
-        (255, 255, 255),
-        False,
-        [
-            (mark_center[0] - 4, mark_center[1]),
-            (mark_center[0] - 1, mark_center[1] + 3),
-            (mark_center[0] + 5, mark_center[1] - 3),
-        ],
-        2,
     )
