@@ -252,3 +252,7 @@ Checklist gợi ý trước khi mở PR:
 ## License
 
 Dự án đang dùng giấy phép MIT. Xem chi tiết tại file [LICENSE](LICENSE).
+
+## Release
+
+Đã có bản mới nhất v0.1.0 [RELEASE](https://github.com/Dyu20705/color-wars/releases)
